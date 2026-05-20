@@ -1,0 +1,536 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  CLIENT
+  CA_PROFESSIONAL
+  SUPER_ADMIN
+}
+
+enum CAStatus {
+  PENDING_PAYMENT
+  PENDING_APPROVAL
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentType {
+  CA_ONBOARDING
+  CONSULTATION
+  SUBSCRIPTION
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  BOOKING_REMINDER
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  MEETING_LINK
+  GENERAL
+}
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+  IN_APP
+}
+
+enum ServiceCategory {
+  TAX
+  GST
+  AUDIT
+  REGISTRATION
+  COMPLIANCE
+  CONSULTING
+  ACCOUNTING
+  PAYROLL
+  TRADEMARK
+  FINANCIAL_PLANNING
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  TRIAL
+}
+
+enum DocumentType {
+  CA_CERTIFICATE
+  IDENTITY_PROOF
+  REGISTRATION_CERTIFICATE
+  CLIENT_DOCUMENT
+  INVOICE
+  OTHER
+}
+
+// ─────────────────────────────────────────────
+// USER (shared auth table)
+// ─────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  phone             String?   @unique
+  passwordHash      String?
+  googleId          String?   @unique
+  role              Role      @default(CLIENT)
+  isEmailVerified   Boolean   @default(false)
+  isPhoneVerified   Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  otpCode           String?
+  otpExpiresAt      DateTime?
+  refreshToken      String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  clientProfile     ClientProfile?
+  caProfessional    CAProfessional?
+  admin             Admin?
+  notifications     Notification[]
+  sentMessages      Message[]       @relation("SentMessages")
+  receivedMessages  Message[]       @relation("ReceivedMessages")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// CLIENT PROFILE
+// ─────────────────────────────────────────────
+
+model ClientProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName      String
+  lastName       String
+  companyName    String?
+  gstin          String?
+  pan            String?
+  address        String?
+  city           String?
+  state          String?
+  pincode        String?
+  avatarUrl      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  bookings       Booking[]
+  documents      Document[]
+  reviews        Review[]
+  payments       Payment[]
+
+  @@map("client_profiles")
+}
+
+// ─────────────────────────────────────────────
+// CA PROFESSIONAL
+// ─────────────────────────────────────────────
+
+model CAProfessional {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName            String
+  lastName             String
+  bio                  String?   @db.Text
+  membershipNumber     String?   @unique
+  experienceYears      Int       @default(0)
+  consultationFee      Int       @default(0)
+  avatarUrl            String?
+  city                 String?
+  state                String?
+  languages            String?
+  status               CAStatus  @default(PENDING_PAYMENT)
+  isAvailable          Boolean   @default(false)
+  averageRating        Float     @default(0)
+  totalReviews         Int       @default(0)
+  totalConsultations   Int       @default(0)
+  totalEarnings        Int       @default(0)
+  platformCommission   Int       @default(0)
+  googleCalendarId     String?
+  meetingLinkBase      String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  specializations      CASpecialization[]
+  timeSlots            TimeSlot[]
+  bookings             Booking[]
+  documents            Document[]
+  reviews              Review[]
+  payments             Payment[]
+  earnings             Earning[]
+  subscription         CASubscription?
+
+  @@map("ca_professionals")
+}
+
+// ─────────────────────────────────────────────
+// CA SPECIALIZATION
+// ─────────────────────────────────────────────
+
+model CASpecialization {
+  id               String          @id @default(uuid())
+  caProfessionalId String
+  caProfessional   CAProfessional  @relation(fields: [caProfessionalId], references: [id], onDelete: Cascade)
+  serviceId        String
+  service          Service         @relation(fields: [serviceId], references: [id])
+  expertiseLevel   Int             @default(1)
+  createdAt        DateTime        @default(now())
+
+  @@unique([caProfessionalId, serviceId])
+  @@map("ca_specializations")
+}
+
+// ─────────────────────────────────────────────
+// SERVICE
+// ─────────────────────────────────────────────
+
+model Service {
+  id               String          @id @default(uuid())
+  name             String          @unique
+  slug             String          @unique
+  description      String          @db.Text
+  shortDescription String?
+  category         ServiceCategory
+  basePrice        Int             @default(0)
+  iconUrl          String?
+  bannerUrl        String?
+  isActive         Boolean         @default(true)
+  isFeatured       Boolean         @default(false)
+  sortOrder        Int             @default(0)
+  metaTitle        String?
+  metaDescription  String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  benefits         ServiceBenefit[]
+  bookings         Booking[]
+  specializations  CASpecialization[]
+
+  @@map("services")
+}
+
+model ServiceBenefit {
+  id        String   @id @default(uuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  benefit   String
+
+  @@map("service_benefits")
+}
+
+// ─────────────────────────────────────────────
+// TIME SLOT
+// ─────────────────────────────────────────────
+
+model TimeSlot {
+  id               String          @id @default(uuid())
+  caProfessionalId String
+  caProfessional   CAProfessional  @relation(fields: [caProfessionalId], references: [id], onDelete: Cascade)
+  date             DateTime        @db.Date
+  startTime        String
+  endTime          String
+  isBooked         Boolean         @default(false)
+  isBlocked        Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+
+  booking          Booking?
+
+  @@unique([caProfessionalId, date, startTime])
+  @@map("time_slots")
+}
+
+// ─────────────────────────────────────────────
+// BOOKING
+// ─────────────────────────────────────────────
+
+model Booking {
+  id                   String          @id @default(uuid())
+  bookingNumber        String          @unique
+  clientProfileId      String
+  clientProfile        ClientProfile   @relation(fields: [clientProfileId], references: [id])
+  caProfessionalId     String
+  caProfessional       CAProfessional  @relation(fields: [caProfessionalId], references: [id])
+  serviceId            String
+  service              Service         @relation(fields: [serviceId], references: [id])
+  timeSlotId           String          @unique
+  timeSlot             TimeSlot        @relation(fields: [timeSlotId], references: [id])
+  status               BookingStatus   @default(PENDING)
+  scheduledAt          DateTime
+  duration             Int             @default(60)
+  meetingLink          String?
+  googleEventId        String?
+  googleMeetLink       String?
+  calendarEventUrl     String?
+  notes                String?         @db.Text
+  cancellationReason   String?
+  amount               Int
+  platformFee          Int             @default(0)
+  caEarning            Int             @default(0)
+  reminderSent15       Boolean         @default(false)
+  reminderSent60       Boolean         @default(false)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  payment              Payment?
+  review               Review?
+  notifications        Notification[]
+
+  @@map("bookings")
+}
+
+// ─────────────────────────────────────────────
+// PAYMENT
+// ─────────────────────────────────────────────
+
+model Payment {
+  id                   String          @id @default(uuid())
+  orderId              String          @unique
+  razorpayOrderId      String?         @unique
+  razorpayPaymentId    String?         @unique
+  razorpaySignature    String?
+  amount               Int
+  currency             String          @default("INR")
+  status               PaymentStatus   @default(PENDING)
+  type                 PaymentType
+  description          String?
+  clientProfileId      String?
+  clientProfile        ClientProfile?  @relation(fields: [clientProfileId], references: [id])
+  caProfessionalId     String?
+  caProfessional       CAProfessional? @relation(fields: [caProfessionalId], references: [id])
+  bookingId            String?         @unique
+  booking              Booking?        @relation(fields: [bookingId], references: [id])
+  invoiceUrl           String?
+  refundId             String?
+  refundAmount         Int?
+  refundReason         String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────────
+// DOCUMENT
+// ─────────────────────────────────────────────
+
+model Document {
+  id               String          @id @default(uuid())
+  name             String
+  fileUrl          String
+  filePublicId     String?
+  fileSize         Int?
+  mimeType         String?
+  type             DocumentType    @default(OTHER)
+  clientProfileId  String?
+  clientProfile    ClientProfile?  @relation(fields: [clientProfileId], references: [id])
+  caProfessionalId String?
+  caProfessional   CAProfessional? @relation(fields: [caProfessionalId], references: [id])
+  isVerified       Boolean         @default(false)
+  verifiedAt       DateTime?
+  aiSummary        String?         @db.Text
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@map("documents")
+}
+
+// ─────────────────────────────────────────────
+// REVIEW
+// ─────────────────────────────────────────────
+
+model Review {
+  id               String          @id @default(uuid())
+  clientProfileId  String
+  clientProfile    ClientProfile   @relation(fields: [clientProfileId], references: [id])
+  caProfessionalId String
+  caProfessional   CAProfessional  @relation(fields: [caProfessionalId], references: [id])
+  bookingId        String          @unique
+  booking          Booking         @relation(fields: [bookingId], references: [id])
+  rating           Int
+  comment          String?         @db.Text
+  isPublished      Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATION
+// ─────────────────────────────────────────────
+
+model Notification {
+  id         String              @id @default(uuid())
+  userId     String
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId  String?
+  booking    Booking?            @relation(fields: [bookingId], references: [id])
+  type       NotificationType
+  channel    NotificationChannel
+  title      String
+  body       String              @db.Text
+  isRead     Boolean             @default(false)
+  isSent     Boolean             @default(false)
+  sentAt     DateTime?
+  metadata   Json?
+  createdAt  DateTime            @default(now())
+
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────
+// MESSAGE (In-App Chat)
+// ─────────────────────────────────────────────
+
+model Message {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content     String   @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("messages")
+}
+
+// ─────────────────────────────────────────────
+// CA SUBSCRIPTION
+// ─────────────────────────────────────────────
+
+model CASubscription {
+  id               String             @id @default(uuid())
+  caProfessionalId String             @unique
+  caProfessional   CAProfessional     @relation(fields: [caProfessionalId], references: [id], onDelete: Cascade)
+  plan             SubscriptionPlan   @default(BASIC)
+  status           SubscriptionStatus @default(ACTIVE)
+  startsAt         DateTime
+  expiresAt        DateTime
+  razorpaySubId    String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@map("ca_subscriptions")
+}
+
+// ─────────────────────────────────────────────
+// EARNING
+// ─────────────────────────────────────────────
+
+model Earning {
+  id               String          @id @default(uuid())
+  caProfessionalId String
+  caProfessional   CAProfessional  @relation(fields: [caProfessionalId], references: [id])
+  bookingId        String?
+  amount           Int
+  platformFee      Int             @default(0)
+  netAmount        Int
+  settledAt        DateTime?
+  isSettled        Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+
+  @@map("earnings")
+}
+
+// ─────────────────────────────────────────────
+// ADMIN
+// ─────────────────────────────────────────────
+
+model Admin {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String
+  permissions Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("admins")
+}
+
+// ─────────────────────────────────────────────
+// PLATFORM SETTINGS
+// ─────────────────────────────────────────────
+
+model PlatformSettings {
+  id                    String   @id @default(uuid())
+  key                   String   @unique
+  value                 String   @db.Text
+  description           String?
+  updatedAt             DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
+// ─────────────────────────────────────────────
+// BLOG / CMS
+// ─────────────────────────────────────────────
+
+model BlogPost {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.LongText
+  excerpt     String?  @db.Text
+  coverUrl    String?
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("blog_posts")
+}
+
+// ─────────────────────────────────────────────
+// CONTACT / LEAD
+// ─────────────────────────────────────────────
+
+model ContactLead {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_leads")
+}

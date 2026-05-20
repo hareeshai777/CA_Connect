@@ -1,0 +1,48 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+export const env = {
+  PORT: parseInt(process.env.PORT || "5000"),
+  NODE_ENV: process.env.NODE_ENV || "development",
+  FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+
+  DATABASE_URL: process.env.DATABASE_URL!,
+
+  JWT_SECRET: process.env.JWT_SECRET!,
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET!,
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
+
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
+  GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI!,
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
+  GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n")!,
+  GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || "primary",
+
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY!,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET!,
+
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID!,
+  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET!,
+  RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET!,
+
+  WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN!,
+  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID!,
+  WHATSAPP_BUSINESS_ACCOUNT_ID: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID!,
+  WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN!,
+
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY!,
+
+  SMTP_HOST: process.env.SMTP_HOST || "smtp.gmail.com",
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || "587"),
+  SMTP_USER: process.env.SMTP_USER!,
+  SMTP_PASS: process.env.SMTP_PASS!,
+  EMAIL_FROM: process.env.EMAIL_FROM || "CA SaaS <noreply@casaas.com>",
+
+  CA_ONBOARDING_FEE: parseInt(process.env.CA_ONBOARDING_FEE || "49900"),
+  PLATFORM_COMMISSION_PERCENT: parseInt(
+    process.env.PLATFORM_COMMISSION_PERCENT || "10"
+  ),
+};
