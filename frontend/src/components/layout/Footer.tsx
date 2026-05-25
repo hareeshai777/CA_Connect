@@ -43,7 +43,7 @@ export function Footer() {
                 <Briefcase className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-white font-heading">
-                CA<span className="text-brand-400">Pro</span>
+                CA<span className="text-brand-400">Connect</span>
               </span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed mb-6 max-w-xs">
@@ -91,7 +91,7 @@ export function Footer() {
 
         <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} CA Pro Platform. All rights reserved.
+            © {new Date().getFullYear()} CAConnect Platform. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>

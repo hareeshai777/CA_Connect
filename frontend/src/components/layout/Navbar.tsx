@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "next-themes";
 import {
-  Menu, X, Sun, Moon, ChevronDown, User, LogOut,
+  Menu, X, ChevronDown, User, LogOut,
   LayoutDashboard, Bell, Settings, Briefcase,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -26,16 +25,16 @@ import { Badge } from "@/components/ui/badge";
 import { cn, getInitials } from "@/lib/utils";
 
 const navLinks = [
-  { label: "Find CA", href: "/find-ca" },
+  { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
-  { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { theme, setTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -59,11 +58,13 @@ export function Navbar() {
   };
 
   const profile = user?.clientProfile || user?.caProfessional;
+  const isHomePage = pathname === "/";
+  const useLight = isHomePage && !scrolled && !isOpen;
 
   return (
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-      scrolled || isOpen ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-sm border-b border-border" : "bg-transparent"
+      useLight ? "bg-transparent" : "bg-white/95 backdrop-blur-md shadow-sm border-b border-border"
     )}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -72,8 +73,8 @@ export function Navbar() {
             <div className="w-9 h-9 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center shadow-md">
               <Briefcase className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold font-heading">
-              CA<span className="text-brand-600">Pro</span>
+            <span className={cn("text-xl font-bold font-heading transition-colors", useLight ? "text-white" : "text-gray-900")}>
+              CA<span className={useLight ? "text-yellow-300" : "text-brand-600"}>Connect</span>
             </span>
           </Link>
 
@@ -85,9 +86,13 @@ export function Navbar() {
                 href={link.href}
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                  pathname === link.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  useLight
+                    ? pathname === link.href
+                      ? "bg-white/20 text-white"
+                      : "text-white/85 hover:text-white hover:bg-white/10"
+                    : pathname === link.href
+                      ? "bg-brand-50 text-brand-700"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 )}
               >
                 {link.label}
@@ -97,19 +102,10 @@ export function Navbar() {
 
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-xl"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
-
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 rounded-xl h-10 px-3">
+                  <Button variant="ghost" className={cn("flex items-center gap-2 rounded-xl h-10 px-3", useLight && "text-white hover:text-white hover:bg-white/15")}>
                     <Avatar className="h-7 w-7">
                       <AvatarImage src={profile?.avatarUrl} />
                       <AvatarFallback className="bg-brand-100 text-brand-700 text-xs font-bold">
@@ -158,10 +154,10 @@ export function Navbar() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" className="rounded-xl" asChild>
+                <Button variant="ghost" className={cn("rounded-xl", useLight ? "text-white hover:text-white hover:bg-white/15" : "text-gray-700 hover:text-gray-900")} asChild>
                   <Link href="/auth/login">Sign in</Link>
                 </Button>
-                <Button className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild>
+                <Button className={cn("rounded-xl font-semibold", useLight ? "bg-white text-brand-700 hover:bg-white/90" : "bg-brand-600 text-white hover:bg-brand-700")} asChild>
                   <Link href="/auth/register">Get Started</Link>
                 </Button>
               </div>
@@ -169,7 +165,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Toggle */}
-          <Button variant="ghost" size="icon" className="md:hidden rounded-xl" onClick={() => setIsOpen(!isOpen)}>
+          <Button variant="ghost" size="icon" className={cn("md:hidden rounded-xl", useLight && "text-white hover:text-white hover:bg-white/15")} onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
@@ -182,7 +178,7 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border bg-white dark:bg-gray-900"
+            className="md:hidden border-t border-border bg-white"
           >
             <div className="container mx-auto px-4 py-4 space-y-2">
               {navLinks.map((link) => (

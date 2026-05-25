@@ -28,7 +28,7 @@ export function ContactSection() {
   };
 
   return (
-    <section id="contact" className="section-padding bg-gray-50 dark:bg-gray-900/50">
+    <section id="contact" className="section-padding bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-sm font-semibold text-brand-600 uppercase tracking-wider mb-3">
@@ -45,7 +45,7 @@ export function ContactSection() {
             <div className="space-y-5">
               {[{ Icon: Mail, label: "Email", value: "support@capro.in" }, { Icon: Phone, label: "Phone", value: "+91 98765 43210" }, { Icon: MapPin, label: "Address", value: "Mumbai, Maharashtra, India" }].map(({ Icon, label, value }) => (
                 <div key={label} className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-brand-100 dark:bg-brand-950 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center">
                     <Icon className="w-5 h-5 text-brand-600" />
                   </div>
                   <div>
@@ -58,7 +58,7 @@ export function ContactSection() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-            <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-border shadow-sm space-y-5">
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-8 border border-border shadow-sm space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Name *</Label>

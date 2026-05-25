@@ -10,7 +10,7 @@ import { sendEmail, emailTemplates } from "../services/email.service";
 import { format } from "date-fns";
 
 export const createBookingOrder = async (req: Request, res: Response) => {
-  const { caId, serviceId, slotId, notes } = req.body;
+  const { caId, serviceId, slotId } = req.body;
   const userId = req.user!.userId;
 
   const client = await prisma.clientProfile.findUnique({ where: { userId } });
@@ -26,6 +26,10 @@ export const createBookingOrder = async (req: Request, res: Response) => {
   if (!service) return sendError(res, "Service not found", 404);
   if (!slot || slot.isBooked || slot.isBlocked)
     return sendError(res, "Time slot not available", 400);
+
+  if (!razorpay) {
+    return sendError(res, "Payment service not configured. Please use direct booking.", 503);
+  }
 
   const amount = ca.consultationFee;
   const orderId = generateOrderId();
@@ -76,18 +80,19 @@ export const confirmBooking = async (req: Request, res: Response) => {
     caId,
     serviceId,
     slotId,
-    notes,
   } = req.body;
   const userId = req.user!.userId;
 
-  const crypto = await import("crypto");
-  const expectedSig = crypto
-    .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
-    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-    .digest("hex");
-
-  if (expectedSig !== razorpaySignature)
-    return sendError(res, "Payment verification failed", 400);
+  const keySecret = env.RAZORPAY_KEY_SECRET as string | undefined;
+  if (keySecret) {
+    const crypto = await import("crypto");
+    const expectedSig = crypto
+      .createHmac("sha256", keySecret)
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest("hex");
+    if (expectedSig !== razorpaySignature)
+      return sendError(res, "Payment verification failed", 400);
+  }
 
   const client = await prisma.clientProfile.findUnique({ where: { userId } });
   if (!client) return sendError(res, "Client profile not found", 404);
@@ -122,7 +127,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
   try {
     const calEvent = await googleCalendarService.createEvent({
       summary: `CA Consultation: ${service.name}`,
-      description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}${notes ? `\nNotes: ${notes}` : ""}`,
+      description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
       startDateTime: scheduledAt.toISOString(),
       endDateTime: endDateTime.toISOString(),
       attendees: [
@@ -162,7 +167,6 @@ export const confirmBooking = async (req: Request, res: Response) => {
         googleEventId,
         googleMeetLink,
         calendarEventUrl,
-        notes,
         amount: ca.consultationFee,
         platformFee,
         caEarning,
@@ -216,6 +220,102 @@ export const confirmBooking = async (req: Request, res: Response) => {
   ]);
 
   return sendSuccess(res, "Booking confirmed", { booking, meetLink: googleMeetLink }, 201);
+};
+
+// Direct booking (demo mode — no Razorpay required)
+export const directBook = async (req: Request, res: Response) => {
+  const { caId, serviceId, slotId, notes } = req.body;
+  const userId = req.user!.userId;
+
+  const client = await prisma.clientProfile.findUnique({ where: { userId } });
+  if (!client) return sendError(res, "Client profile not found. Please complete your profile first.", 404);
+
+  const [ca, service, slot] = await Promise.all([
+    prisma.cAProfessional.findUnique({ where: { id: caId }, include: { user: { select: { email: true, phone: true } } } }),
+    prisma.service.findUnique({ where: { id: serviceId } }),
+    prisma.timeSlot.findUnique({ where: { id: slotId } }),
+  ]);
+
+  if (!ca || ca.status !== "ACTIVE") return sendError(res, "CA not available", 400);
+  if (!service) return sendError(res, "Service not found", 404);
+  if (!slot || slot.isBooked || slot.isBlocked) return sendError(res, "Time slot not available", 400);
+
+  const scheduledAt = new Date(`${slot.date.toISOString().split("T")[0]}T${slot.startTime}`);
+  const [endHour, endMin] = slot.endTime.split(":").map(Number);
+  const endDateTime = new Date(scheduledAt);
+  endDateTime.setHours(endHour, endMin);
+
+  const bookingNumber = generateBookingNumber();
+  const platformFee = Math.round((ca.consultationFee * env.PLATFORM_COMMISSION_PERCENT) / 100);
+  const caEarning = ca.consultationFee - platformFee;
+  const clientUser = await prisma.user.findUnique({ where: { id: userId } });
+
+  let googleMeetLink = `https://meet.google.com/new`;
+  try {
+    const calEvent = await googleCalendarService.createEvent({
+      summary: `CA Consultation: ${service.name}`,
+      description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
+      startDateTime: scheduledAt.toISOString(),
+      endDateTime: endDateTime.toISOString(),
+      attendees: [
+        { email: clientUser?.email || "", displayName: `${client.firstName} ${client.lastName}` },
+        { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
+      ],
+    });
+    googleMeetLink = calEvent.meetLink || googleMeetLink;
+  } catch {}
+
+  const orderId = generateOrderId();
+
+  const booking = await prisma.$transaction(async (tx) => {
+    await tx.timeSlot.update({ where: { id: slotId }, data: { isBooked: true } });
+
+    const payment = await tx.payment.create({
+      data: {
+        orderId,
+        razorpayOrderId: `demo_${orderId}`,
+        amount: ca.consultationFee,
+        status: "SUCCESS",
+        type: "CONSULTATION",
+        description: `${service.name} consultation with ${ca.firstName} ${ca.lastName}`,
+        clientProfileId: client.id,
+        caProfessionalId: ca.id,
+      },
+    });
+
+    const bk = await tx.booking.create({
+      data: {
+        bookingNumber,
+        clientProfileId: client.id,
+        caProfessionalId: caId,
+        serviceId,
+        timeSlotId: slotId,
+        status: "CONFIRMED",
+        scheduledAt,
+        meetingLink: googleMeetLink,
+        googleMeetLink,
+        notes,
+        amount: ca.consultationFee,
+        platformFee,
+        caEarning,
+      },
+    });
+
+    await tx.payment.update({ where: { id: payment.id }, data: { bookingId: bk.id } });
+
+    await tx.earning.create({
+      data: { caProfessionalId: caId, bookingId: bk.id, amount: ca.consultationFee, platformFee, netAmount: caEarning },
+    });
+
+    await tx.cAProfessional.update({
+      where: { id: caId },
+      data: { totalConsultations: { increment: 1 }, totalEarnings: { increment: caEarning } },
+    });
+
+    return bk;
+  });
+
+  return sendSuccess(res, "Booking confirmed!", { booking, meetLink: googleMeetLink }, 201);
 };
 
 export const getClientBookings = async (req: Request, res: Response) => {

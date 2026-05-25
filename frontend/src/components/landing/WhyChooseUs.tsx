@@ -8,49 +8,49 @@ const features = [
     icon: Shield,
     title: "ICAI Verified CAs",
     description: "Every CA on our platform is manually verified with valid ICAI membership and authentic credentials.",
-    color: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
+    color: "text-blue-600 bg-blue-50",
   },
   {
     icon: Zap,
     title: "Instant Booking",
     description: "Book a consultation in under 2 minutes. Real-time slot availability with instant confirmation.",
-    color: "text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-950",
+    color: "text-yellow-600 bg-yellow-50",
   },
   {
     icon: Star,
     title: "Transparent Reviews",
     description: "Genuine client reviews and ratings to help you make informed decisions every time.",
-    color: "text-gold-600 bg-gold-50 dark:text-gold-400 dark:bg-gold-950",
+    color: "text-gold-600 bg-gold-50",
   },
   {
     icon: Video,
     title: "Google Meet Integration",
     description: "Automatic Google Meet link generation with calendar invite sent to all parties.",
-    color: "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950",
+    color: "text-green-600 bg-green-50",
   },
   {
     icon: Lock,
     title: "Secure Payments",
     description: "Razorpay-powered secure payments with UPI, cards, and net banking. PCI-DSS compliant.",
-    color: "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-950",
+    color: "text-purple-600 bg-purple-50",
   },
   {
     icon: Bot,
     title: "AI-Powered Matching",
     description: "Gemini AI recommends the best CA professionals based on your specific financial needs.",
-    color: "text-pink-600 bg-pink-50 dark:text-pink-400 dark:bg-pink-950",
+    color: "text-pink-600 bg-pink-50",
   },
   {
     icon: Clock,
     title: "Flexible Scheduling",
     description: "Morning, afternoon, or evening — book consultations that fit your schedule, including weekends.",
-    color: "text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-950",
+    color: "text-orange-600 bg-orange-50",
   },
   {
     icon: HeadphonesIcon,
     title: "24/7 Support",
     description: "Round-the-clock customer support via chat, WhatsApp, and email. We're always here to help.",
-    color: "text-teal-600 bg-teal-50 dark:text-teal-400 dark:bg-teal-950",
+    color: "text-teal-600 bg-teal-50",
   },
 ];
 
@@ -93,7 +93,7 @@ export function WhyChooseUs() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.07 }}
-              className="p-6 bg-white dark:bg-gray-800 rounded-2xl border border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              className="p-6 bg-white rounded-2xl border border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feature.color}`}>
                 <feature.icon className="w-6 h-6" />

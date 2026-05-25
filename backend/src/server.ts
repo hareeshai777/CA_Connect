@@ -17,6 +17,10 @@ import serviceRoutes from "./routes/service.routes";
 import adminRoutes from "./routes/admin.routes";
 import aiRoutes from "./routes/ai.routes";
 import contactRoutes from "./routes/contact.routes";
+import assistanceRoutes from "./routes/assistance.routes";
+import commissionRoutes from "./routes/commission.routes";
+import caseRoutes from "./routes/case.routes";
+import clientRoutes from "./routes/client.routes";
 
 import { startNotificationCron } from "./services/notification.service";
 
@@ -62,6 +66,10 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/assistance", assistanceRoutes);
+app.use("/api/commissions", commissionRoutes);
+app.use("/api/cases", caseRoutes);
+app.use("/api/client", clientRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

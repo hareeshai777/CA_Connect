@@ -68,7 +68,7 @@ export default function CADocumentsPage() {
       {/* Upload Zone */}
       <div
         onClick={() => fileRef.current?.click()}
-        className="mb-6 border-2 border-dashed border-border rounded-2xl p-10 text-center cursor-pointer hover:border-brand-400 hover:bg-brand-50/50 dark:hover:bg-brand-950/20 transition-colors"
+        className="mb-6 border-2 border-dashed border-border rounded-2xl p-10 text-center cursor-pointer hover:border-brand-400 hover:bg-brand-50/50:bg-brand-950/20 transition-colors"
       >
         <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
         <p className="font-medium text-sm">Drop files here or click to upload</p>
@@ -91,7 +91,7 @@ export default function CADocumentsPage() {
             return (
               <motion.div key={doc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
                 className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border hover:bg-muted/30 transition-colors">
-                <div className="w-10 h-10 bg-brand-50 dark:bg-brand-950 rounded-xl flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center shrink-0">
                   <File className="w-5 h-5 text-brand-600" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -103,7 +103,7 @@ export default function CADocumentsPage() {
                 </Badge>
                 {doc.fileUrl && (
                   <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
-                    className="p-2 rounded-xl text-muted-foreground hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors">
+                    className="p-2 rounded-xl text-muted-foreground hover:text-brand-600 hover:bg-brand-50:bg-brand-950 transition-colors">
                     <Download className="w-4 h-4" />
                   </a>
                 )}

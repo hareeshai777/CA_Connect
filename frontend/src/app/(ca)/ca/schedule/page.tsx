@@ -34,12 +34,14 @@ export default function CASchedulePage() {
     if (!form.date && !form.isRecurring) return toast.error("Please select a date");
     setAdding(true);
     try {
-      await api.post("/ca/timeslots", {
-        date: form.isRecurring ? undefined : form.date,
-        startTime: form.startTime,
-        endTime: form.endTime,
-        isRecurring: form.isRecurring,
-        dayOfWeek: form.isRecurring ? form.dayOfWeek : undefined,
+      await api.post("/ca/slots", {
+        slots: [{
+          date: form.isRecurring ? undefined : form.date,
+          startTime: form.startTime,
+          endTime: form.endTime,
+          isRecurring: form.isRecurring,
+          dayOfWeek: form.isRecurring ? form.dayOfWeek : undefined,
+        }],
       });
       toast.success("Time slot added");
       fetchSlots();
@@ -48,7 +50,7 @@ export default function CASchedulePage() {
 
   const deleteSlot = async (id: string) => {
     try {
-      await api.delete(`/ca/timeslots/${id}`);
+      await api.delete(`/ca/slots/${id}`);
       toast.success("Slot removed");
       setSlots((prev) => prev.filter((s) => s.id !== id));
     } catch (err) { toast.error(getErrorMessage(err)); }
@@ -114,8 +116,8 @@ export default function CASchedulePage() {
             </Button>
           </div>
 
-          <div className="mt-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
-            <p className="text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
+          <div className="mt-4 p-3 rounded-xl bg-blue-50 border border-blue-200">
+            <p className="text-xs text-blue-700 flex items-start gap-2">
               <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
               Clients can only book slots you mark as available here. Add recurring slots to save time.
             </p>
@@ -138,10 +140,10 @@ export default function CASchedulePage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {upcoming.map((slot, i) => (
+              {upcoming.map((slot) => (
                 <div key={slot.id} className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card hover:bg-muted/30 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-50 dark:bg-brand-950 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
                       <Clock className="w-5 h-5 text-brand-600" />
                     </div>
                     <div>
@@ -169,7 +171,7 @@ export default function CASchedulePage() {
                 {booked.map((slot) => (
                   <div key={slot.id} className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card opacity-70">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-50 dark:bg-green-950 rounded-xl flex items-center justify-center">
+                      <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
                         <Calendar className="w-5 h-5 text-green-600" />
                       </div>
                       <div>

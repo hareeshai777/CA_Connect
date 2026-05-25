@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Star, MapPin, Clock, Languages, CheckCircle, Calendar, Video, ArrowRight, Loader2, CreditCard } from "lucide-react";
-import { motion } from "framer-motion";
+import { Star, MapPin, Clock, Languages, CheckCircle, Video, Loader2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +17,7 @@ import { toast } from "sonner";
 export default function CAProfilePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [ca, setCA] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -44,7 +43,7 @@ export default function CAProfilePage() {
 
   const handleBooking = async () => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      router.push(`/auth/login?redirect=/ca/${id}`);
       return;
     }
     if (!selectedSlot || !selectedService) {
@@ -52,14 +51,20 @@ export default function CAProfilePage() {
       return;
     }
     setBookingLoading(true);
+
+    // Try Razorpay first; fall back to direct booking if not configured
     try {
-      const res = await api.post("/bookings/order", {
+      const orderRes = await api.post("/bookings/order", {
         caId: id,
         serviceId: selectedService.id,
         slotId: selectedSlot.id,
       });
 
-      const { razorpayOrderId, amount, currency, key, prefill } = res.data.data;
+      const { razorpayOrderId, amount, currency, key, prefill } = orderRes.data.data;
+
+      if (!key || key === "rzp_test_" || !(window as any).Razorpay) {
+        throw new Error("Razorpay not configured");
+      }
 
       const rzp = new (window as any).Razorpay({
         key,
@@ -70,7 +75,7 @@ export default function CAProfilePage() {
         description: `${selectedService.name} with ${ca.firstName} ${ca.lastName}`,
         handler: async (response: any) => {
           try {
-            const confirmRes = await api.post("/bookings/confirm", {
+            await api.post("/bookings/confirm", {
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
@@ -79,7 +84,7 @@ export default function CAProfilePage() {
               slotId: selectedSlot.id,
             });
             toast.success("Booking confirmed! Check your email for details.");
-            router.push(`/client/bookings`);
+            router.push("/client/bookings");
           } catch (err) {
             toast.error(getErrorMessage(err));
           }
@@ -88,8 +93,19 @@ export default function CAProfilePage() {
         theme: { color: "#1d4ed8" },
       });
       rzp.open();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
+    } catch {
+      // Razorpay not available — use direct booking (demo mode)
+      try {
+        await api.post("/bookings/direct", {
+          caId: id,
+          serviceId: selectedService.id,
+          slotId: selectedSlot.id,
+        });
+        toast.success("Booking confirmed! Your consultation is scheduled.");
+        router.push("/client/bookings");
+      } catch (err) {
+        toast.error(getErrorMessage(err));
+      }
     } finally {
       setBookingLoading(false);
     }
@@ -115,11 +131,11 @@ export default function CAProfilePage() {
       <Navbar />
       <main className="flex-1 pt-16">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-brand-50 to-blue-50 dark:from-brand-950 dark:to-gray-900 border-b border-border">
+        <div className="bg-gradient-to-r from-brand-50 to-blue-50 border-b border-border">
           <div className="container mx-auto px-4 py-12">
             <div className="flex flex-col md:flex-row gap-8 items-start">
               <div className="relative">
-                <Avatar className="h-28 w-28 border-4 border-white dark:border-gray-800 shadow-xl">
+                <Avatar className="h-28 w-28 border-4 border-white shadow-xl">
                   <AvatarImage src={ca.avatarUrl} />
                   <AvatarFallback className="text-4xl font-bold bg-brand-100 text-brand-700">
                     {getInitials(ca.firstName, ca.lastName)}
@@ -230,7 +246,7 @@ export default function CAProfilePage() {
                     <div className="space-y-2">
                       {ca.specializations?.map(({ service }: any) => (
                         <button key={service.id} onClick={() => setSelectedService(service)}
-                          className={`w-full text-left p-3 rounded-xl border text-sm transition-colors ${selectedService?.id === service.id ? "border-brand-500 bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300" : "border-border hover:border-brand-300"}`}>
+                          className={`w-full text-left p-3 rounded-xl border text-sm transition-colors ${selectedService?.id === service.id ? "border-brand-500 bg-brand-50 text-brand-700" : "border-border hover:border-brand-300"}`}>
                           {service.name}
                         </button>
                       ))}
@@ -245,7 +261,7 @@ export default function CAProfilePage() {
                         const d = date.toISOString().split("T")[0];
                         return (
                           <button key={d} onClick={() => { setSelectedDate(d); setSelectedSlot(null); }}
-                            className={`p-2 rounded-xl border text-center text-xs transition-colors ${selectedDate === d ? "border-brand-500 bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 font-semibold" : "border-border hover:border-brand-300"}`}>
+                            className={`p-2 rounded-xl border text-center text-xs transition-colors ${selectedDate === d ? "border-brand-500 bg-brand-50 text-brand-700 font-semibold" : "border-border hover:border-brand-300"}`}>
                             <div className="font-medium">{date.toLocaleDateString("en", { weekday: "short" })}</div>
                             <div>{date.getDate()}</div>
                           </button>
@@ -264,7 +280,7 @@ export default function CAProfilePage() {
                         <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                           {slots.map((slot) => (
                             <button key={slot.id} onClick={() => setSelectedSlot(slot)}
-                              className={`p-2.5 rounded-xl border text-xs font-medium transition-colors ${selectedSlot?.id === slot.id ? "border-brand-500 bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300" : "border-border hover:border-brand-300"}`}>
+                              className={`p-2.5 rounded-xl border text-xs font-medium transition-colors ${selectedSlot?.id === slot.id ? "border-brand-500 bg-brand-50 text-brand-700" : "border-border hover:border-brand-300"}`}>
                               {slot.startTime} - {slot.endTime}
                             </button>
                           ))}

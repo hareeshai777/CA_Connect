@@ -99,13 +99,13 @@ export default function FindCAPage() {
             <div className="flex gap-2 flex-wrap flex-1">
               {serviceFilters.map((f) => (
                 <button key={f.value} onClick={() => { setService(f.value); setPage(1); }}
-                  className={`px-4 py-2 text-sm font-medium rounded-xl border transition-colors ${service === f.value ? "bg-brand-600 border-brand-600 text-white" : "border-border text-muted-foreground hover:border-brand-300 hover:text-brand-700 bg-white dark:bg-gray-800"}`}>
+                  className={`px-4 py-2 text-sm font-medium rounded-xl border transition-colors ${service === f.value ? "bg-brand-600 border-brand-600 text-white" : "border-border text-muted-foreground hover:border-brand-300 hover:text-brand-700 bg-white"}`}>
                   {f.label}
                 </button>
               ))}
             </div>
             <select
-              className="h-10 rounded-xl border border-border bg-white dark:bg-gray-800 px-4 text-sm font-medium"
+              className="h-10 rounded-xl border border-border bg-white px-4 text-sm font-medium"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >

@@ -15,6 +15,7 @@ enum Role {
   CLIENT
   CA_PROFESSIONAL
   SUPER_ADMIN
+  ASSISTANCE_TEAM
 }
 
 enum CAStatus {
@@ -97,6 +98,39 @@ enum DocumentType {
   OTHER
 }
 
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  WAITING_FOR_CLIENT
+  WAITING_FOR_CA
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum DocumentVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  NEEDS_RESUBMISSION
+}
+
+enum CaseStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  UNDER_REVIEW
+  PENDING_CLIENT_INFO
+  COMPLETED
+  CLOSED
+}
+
 // ─────────────────────────────────────────────
 // USER (shared auth table)
 // ─────────────────────────────────────────────
@@ -120,9 +154,11 @@ model User {
   clientProfile     ClientProfile?
   caProfessional    CAProfessional?
   admin             Admin?
+  assistanceMember  AssistanceMember?
   notifications     Notification[]
   sentMessages      Message[]       @relation("SentMessages")
   receivedMessages  Message[]       @relation("ReceivedMessages")
+  caseMessages      CaseMessage[]
 
   @@map("users")
 }
@@ -152,6 +188,8 @@ model ClientProfile {
   documents      Document[]
   reviews        Review[]
   payments       Payment[]
+  tasks          Task[]
+  cases          Case[]
 
   @@map("client_profiles")
 }
@@ -194,6 +232,9 @@ model CAProfessional {
   payments             Payment[]
   earnings             Earning[]
   subscription         CASubscription?
+  tasks                Task[]
+  assignedTasks        Task[]  @relation("AssignedByCA")
+  cases                Case[]
 
   @@map("ca_professionals")
 }
@@ -309,6 +350,9 @@ model Booking {
   payment              Payment?
   review               Review?
   notifications        Notification[]
+  tasks                Task[]
+  commissionLedger     CommissionLedger?
+  case                 Case?
 
   @@map("bookings")
 }
@@ -360,11 +404,15 @@ model Document {
   clientProfile    ClientProfile?  @relation(fields: [clientProfileId], references: [id])
   caProfessionalId String?
   caProfessional   CAProfessional? @relation(fields: [caProfessionalId], references: [id])
-  isVerified       Boolean         @default(false)
-  verifiedAt       DateTime?
-  aiSummary        String?         @db.Text
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  isVerified            Boolean                    @default(false)
+  verifiedAt            DateTime?
+  verificationStatus    DocumentVerificationStatus @default(PENDING)
+  rejectionReason       String?
+  aiSummary             String?                    @db.Text
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+
+  taskDocuments         TaskDocument[]
 
   @@map("documents")
 }
@@ -533,4 +581,208 @@ model ContactLead {
   createdAt DateTime @default(now())
 
   @@map("contact_leads")
+}
+
+// ─────────────────────────────────────────────
+// ASSISTANCE TEAM MEMBER
+// ─────────────────────────────────────────────
+
+model AssistanceMember {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String
+  designation String?
+  department  String?
+  avatarUrl   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignedTasks  Task[]        @relation("AssignedTo")
+  taskComments   TaskComment[]
+  assignedCases  Case[]
+
+  @@map("assistance_members")
+}
+
+// ─────────────────────────────────────────────
+// TASK (Assistance workflow task)
+// ─────────────────────────────────────────────
+
+model Task {
+  id                 String       @id @default(uuid())
+  taskNumber         String       @unique
+  title              String
+  description        String?      @db.Text
+  status             TaskStatus   @default(PENDING)
+  priority           TaskPriority @default(MEDIUM)
+  dueDate            DateTime?
+  completedAt        DateTime?
+
+  bookingId          String?
+  booking            Booking?     @relation(fields: [bookingId], references: [id])
+
+  assignedToId       String?
+  assignedTo         AssistanceMember? @relation("AssignedTo", fields: [assignedToId], references: [id])
+
+  assignedByCaId     String?
+  assignedByCa       CAProfessional?   @relation("AssignedByCA", fields: [assignedByCaId], references: [id])
+
+  clientProfileId    String?
+  clientProfile      ClientProfile?  @relation(fields: [clientProfileId], references: [id])
+
+  caProfessionalId   String?
+  caProfessional     CAProfessional? @relation(fields: [caProfessionalId], references: [id])
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  comments           TaskComment[]
+  taskDocuments      TaskDocument[]
+
+  @@map("tasks")
+}
+
+// ─────────────────────────────────────────────
+// TASK COMMENT
+// ─────────────────────────────────────────────
+
+model TaskComment {
+  id               String            @id @default(uuid())
+  taskId           String
+  task             Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId         String
+  author           AssistanceMember  @relation(fields: [authorId], references: [id])
+  content          String            @db.Text
+  isInternal       Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+
+  @@map("task_comments")
+}
+
+// ─────────────────────────────────────────────
+// TASK DOCUMENT
+// ─────────────────────────────────────────────
+
+model TaskDocument {
+  id                   String                    @id @default(uuid())
+  taskId               String
+  task                 Task                      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  documentId           String
+  document             Document                  @relation(fields: [documentId], references: [id])
+  verificationStatus   DocumentVerificationStatus @default(PENDING)
+  verifiedAt           DateTime?
+  rejectionReason      String?
+  createdAt            DateTime                  @default(now())
+
+  @@map("task_documents")
+}
+
+// ─────────────────────────────────────────────
+// CASE (opened by CA after consultation)
+// ─────────────────────────────────────────────
+
+model Case {
+  id                     String      @id @default(uuid())
+  caseNumber             String      @unique
+  title                  String
+  status                 CaseStatus  @default(OPEN)
+
+  bookingId              String      @unique
+  booking                Booking     @relation(fields: [bookingId], references: [id])
+
+  clientProfileId        String
+  clientProfile          ClientProfile   @relation(fields: [clientProfileId], references: [id])
+
+  caProfessionalId       String
+  caProfessional         CAProfessional  @relation(fields: [caProfessionalId], references: [id])
+
+  // CA writes notes after consultation — internal only
+  caNotes                String?     @db.Text
+
+  // CA's instructions when assigning to assistance team
+  assignmentInstructions String?     @db.Text
+
+  // What CA communicated to client
+  clientUpdateNotes      String?     @db.Text
+
+  // Assistance team's own work progress notes (internal, visible only to CA and assistance)
+  assistanceWorkNotes    String?     @db.Text
+
+  // Assistance team assignment
+  assignedToId           String?
+  assignedTo             AssistanceMember? @relation(fields: [assignedToId], references: [id])
+  assignedAt             DateTime?
+
+  // Dynamic earning CA allocates to assistance team for this case
+  assistanceEarning      Int         @default(0)
+
+  completedAt            DateTime?
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  messages               CaseMessage[]
+
+  @@map("cases")
+}
+
+// ─────────────────────────────────────────────
+// CASE MESSAGE (internal CA ↔ Assistance Team only)
+// ─────────────────────────────────────────────
+
+model CaseMessage {
+  id         String   @id @default(uuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+  senderRole String   // "CA" | "ASSISTANCE"
+  content    String   @db.Text
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("case_messages")
+}
+
+// ─────────────────────────────────────────────
+// COMMISSION SETTINGS
+// ─────────────────────────────────────────────
+
+model CommissionSettings {
+  id                      String   @id @default(uuid())
+  platformCommissionPct   Float    @default(20)
+  caCommissionPct         Float    @default(70)
+  assistanceTeamPct       Float    @default(10)
+  consultationFeeFixed    Int      @default(49900)
+  isActive                Boolean  @default(true)
+  effectiveFrom           DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  updatedById             String?
+
+  @@map("commission_settings")
+}
+
+// ─────────────────────────────────────────────
+// COMMISSION LEDGER
+// ─────────────────────────────────────────────
+
+model CommissionLedger {
+  id                String   @id @default(uuid())
+  bookingId         String
+  booking           Booking  @relation(fields: [bookingId], references: [id])
+  totalAmount       Int
+  platformAmount    Int
+  caAmount          Int
+  assistanceAmount  Int
+  platformPct       Float
+  caPct             Float
+  assistancePct     Float
+  isSettled         Boolean  @default(false)
+  settledAt         DateTime?
+  createdAt         DateTime @default(now())
+
+  @@unique([bookingId])
+  @@map("commission_ledger")
 }

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Briefcase, LayoutDashboard, Users, UserCheck, BarChart3, Settings, LogOut, Bell, ShieldAlert, FileText, DollarSign } from "lucide-react";
+import { Briefcase, LayoutDashboard, Users, UserCheck, BarChart3, Settings, LogOut, Bell, ShieldAlert, FileText, DollarSign, PackageOpen } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,9 @@ const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/ca-management", icon: UserCheck, label: "CA Management" },
   { href: "/admin/users", icon: Users, label: "Users" },
+  { href: "/admin/commissions", icon: DollarSign, label: "Commissions" },
+  { href: "/admin/assistance-team", icon: FileText, label: "Assistance Team" },
+  { href: "/admin/services", icon: PackageOpen, label: "Services" },
   { href: "/admin/analytics", icon: BarChart3, label: "Analytics" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
@@ -42,7 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
               <Briefcase className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-bold font-heading text-white">CA<span className="text-brand-400">Pro</span></span>
+            <span className="text-lg font-bold font-heading text-white">CA<span className="text-brand-400">Connect</span></span>
           </Link>
           <div className="mt-2 flex items-center gap-1.5">
             <ShieldAlert className="w-3.5 h-3.5 text-gold-400" />
@@ -83,7 +86,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 ml-64 min-h-screen">
         <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
           <div className="text-lg font-semibold font-heading text-gray-100">
-            {navItems.find((n) => n.href === pathname)?.label || "Admin Dashboard"}
+            {navItems.find((n) => pathname.startsWith(n.href))?.label || "Admin Dashboard"}
           </div>
           <button className="relative p-2 rounded-xl hover:bg-gray-800 transition-colors">
             <Bell className="w-5 h-5 text-gray-400" />

@@ -63,7 +63,7 @@ const testimonials = [
 
 export function TestimonialsSection() {
   return (
-    <section className="section-padding bg-gray-50 dark:bg-gray-900/50">
+    <section className="section-padding bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <motion.p
@@ -100,9 +100,9 @@ export function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.08 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
             >
-              <Quote className="w-8 h-8 text-brand-200 dark:text-brand-800 mb-4" />
+              <Quote className="w-8 h-8 text-brand-200 mb-4" />
               <div className="flex gap-1 mb-4">
                 {[...Array(t.rating)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 text-gold-500 fill-gold-500" />
@@ -118,7 +118,7 @@ export function TestimonialsSection() {
                   <p className="text-xs text-muted-foreground">{t.role}</p>
                 </div>
                 <div className="ml-auto">
-                  <span className="text-xs bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 px-2 py-1 rounded-full">{t.service}</span>
+                  <span className="text-xs bg-brand-50 text-brand-700 px-2 py-1 rounded-full">{t.service}</span>
                 </div>
               </div>
             </motion.div>

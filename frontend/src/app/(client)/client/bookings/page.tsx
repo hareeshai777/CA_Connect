@@ -33,7 +33,7 @@ export default function ClientBookingsPage() {
       const res = await api.get(`/bookings/my?${params}`);
       setBookings(res.data.data || []);
       setTotal(res.data.meta?.total || 0);
-    } catch { setBookings([]); } finally { setLoading(false); }
+    } catch { setBookings([]); toast.error("Failed to load bookings"); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchBookings(); }, [page, status]);
@@ -57,7 +57,7 @@ export default function ClientBookingsPage() {
         <div><h1 className="text-2xl font-bold font-heading">My Bookings</h1><p className="text-muted-foreground mt-1">{total} total consultations</p></div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="rounded-xl" onClick={fetchBookings}><RefreshCw className="w-4 h-4 mr-1" />Refresh</Button>
-          <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild><Link href="/find-ca">+ Book New</Link></Button>
+          <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild><Link href="/services">+ Book Consultation</Link></Button>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export default function ClientBookingsPage() {
           <div className="text-center py-20">
             <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground mb-4">No bookings found</p>
-            <Button className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild><Link href="/find-ca">Book a Consultation</Link></Button>
+            <Button className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild><Link href="/services">Book a Consultation</Link></Button>
           </div>
         ) : (
           filtered.map((b, i) => (

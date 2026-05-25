@@ -30,16 +30,16 @@ const iconMap: Record<string, any> = {
 };
 
 const colorMap: Record<string, string> = {
-  "gst-filing": "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400",
-  "income-tax-filing": "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400",
-  "company-registration": "bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400",
-  "audit-services": "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
-  "trademark-registration": "bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400",
-  "business-compliance": "bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400",
-  "startup-consulting": "bg-yellow-50 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-400",
-  "financial-planning": "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400",
-  "accounting-services": "bg-pink-50 text-pink-600 dark:bg-pink-950 dark:text-pink-400",
-  "payroll-services": "bg-cyan-50 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400",
+  "gst-filing": "bg-blue-50 text-blue-600",
+  "income-tax-filing": "bg-green-50 text-green-600",
+  "company-registration": "bg-purple-50 text-purple-600",
+  "audit-services": "bg-red-50 text-red-600",
+  "trademark-registration": "bg-orange-50 text-orange-600",
+  "business-compliance": "bg-teal-50 text-teal-600",
+  "startup-consulting": "bg-yellow-50 text-yellow-600",
+  "financial-planning": "bg-indigo-50 text-indigo-600",
+  "accounting-services": "bg-pink-50 text-pink-600",
+  "payroll-services": "bg-cyan-50 text-cyan-600",
 };
 
 // Static fallback so the page works even before the backend is connected
@@ -113,7 +113,7 @@ export default function ServicesPage() {
         </section>
 
         {/* Stats bar */}
-        <div className="bg-white dark:bg-gray-900 border-b border-border">
+        <div className="bg-white border-b border-border">
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
               {[
@@ -142,7 +142,7 @@ export default function ServicesPage() {
                 className={`px-4 py-2 text-sm font-medium rounded-xl border transition-colors ${
                   activeCategory === cat
                     ? "bg-brand-600 border-brand-600 text-white shadow-sm"
-                    : "border-border text-muted-foreground hover:border-brand-300 hover:text-brand-700 bg-white dark:bg-gray-800"
+                    : "border-border text-muted-foreground hover:border-brand-300 hover:text-brand-700 bg-white"
                 }`}
               >
                 {cat.replace("_", " ")}
@@ -173,7 +173,7 @@ export default function ServicesPage() {
                     transition={{ delay: index * 0.05 }}
                   >
                     <Link href={`/services/${service.slug}`} className="group block h-full">
-                      <div className="h-full bg-white dark:bg-gray-800 rounded-2xl border border-border p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                      <div className="h-full bg-white rounded-2xl border border-border p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                         {/* Top */}
                         <div className="flex items-start justify-between mb-4">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color} group-hover:scale-110 transition-transform`}>
@@ -218,7 +218,7 @@ export default function ServicesPage() {
         </div>
 
         {/* Bottom CTA */}
-        <section className="bg-brand-50 dark:bg-brand-950 border-t border-brand-100 dark:border-brand-900 py-16 px-4">
+        <section className="bg-brand-50 border-t border-brand-100 py-16 px-4">
           <div className="container mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold font-heading mb-3">Can't find what you need?</h2>
             <p className="text-muted-foreground mb-6">
@@ -226,7 +226,7 @@ export default function ServicesPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild>
-                <Link href="/find-ca">Browse CA Professionals <ArrowRight className="ml-2 w-4 h-4" /></Link>
+                <Link href="/services">Book Consultation — ₹499 <ArrowRight className="ml-2 w-4 h-4" /></Link>
               </Button>
               <Button variant="outline" className="rounded-xl" asChild>
                 <Link href="/client/ai-chat">Ask AI Assistant</Link>

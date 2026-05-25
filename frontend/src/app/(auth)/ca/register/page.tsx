@@ -80,9 +80,16 @@ export default function CARegisterPage() {
         languages: data.languages,
       });
 
-      setCAId(caRes.data.data.caId);
-      setRazorpayOrderId(caRes.data.data.razorpayOrderId);
-      setStep(3);
+      const { caId: newCaId, razorpayOrderId: orderId, demoMode } = caRes.data.data;
+      setCAId(newCaId);
+      if (demoMode) {
+        toast.success("CA profile created! Your account is under review.");
+        setPaymentDone(true);
+        setStep(4);
+      } else {
+        setRazorpayOrderId(orderId);
+        setStep(3);
+      }
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -188,7 +195,7 @@ export default function CARegisterPage() {
 
       {step === 3 && (
         <div className="text-center">
-          <div className="w-16 h-16 bg-brand-100 dark:bg-brand-950 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <CreditCard className="w-8 h-8 text-brand-600" />
           </div>
           <h2 className="text-2xl font-bold font-heading mb-2">One-time Onboarding Fee</h2>
@@ -214,7 +221,7 @@ export default function CARegisterPage() {
 
       {step === 4 && (
         <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-950 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold font-heading mb-2">Application Submitted!</h2>

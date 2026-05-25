@@ -35,6 +35,16 @@ router.post(
   bookingController.confirmBooking
 );
 
+// Direct booking (no Razorpay — for demo/dev)
+router.post(
+  "/direct",
+  authenticate,
+  authorize("CLIENT"),
+  [body("caId").notEmpty(), body("serviceId").notEmpty(), body("slotId").notEmpty()],
+  validate,
+  bookingController.directBook
+);
+
 router.get("/my", authenticate, bookingController.getClientBookings);
 router.get("/ca/bookings", authenticate, authorize("CA_PROFESSIONAL"), bookingController.getCABookings);
 

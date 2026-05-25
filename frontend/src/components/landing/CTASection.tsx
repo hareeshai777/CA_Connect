@@ -38,7 +38,7 @@ export function CTASection() {
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
           <Button size="xl" className="bg-white text-brand-800 hover:bg-brand-50 rounded-xl font-semibold" asChild>
-            <Link href="/find-ca">
+            <Link href="/services">
               <Search className="mr-2 h-5 w-5" />
               Find Your CA Today
               <ArrowRight className="ml-2 h-5 w-5" />

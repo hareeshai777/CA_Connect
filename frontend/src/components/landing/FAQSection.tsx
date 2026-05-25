@@ -75,7 +75,7 @@ export function FAQSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className="border border-border rounded-xl overflow-hidden bg-white dark:bg-gray-800"
+                className="border border-border rounded-xl overflow-hidden bg-white"
               >
                 <button
                   className="w-full flex items-center justify-between p-5 text-left hover:bg-muted/30 transition-colors"
@@ -102,7 +102,7 @@ export function FAQSection() {
             ))}
           </div>
 
-          <div className="text-center mt-12 p-8 bg-brand-50 dark:bg-brand-950 rounded-2xl border border-brand-100 dark:border-brand-900">
+          <div className="text-center mt-12 p-8 bg-brand-50 rounded-2xl border border-brand-100">
             <MessageCircle className="w-10 h-10 text-brand-600 mx-auto mb-3" />
             <h3 className="font-semibold font-heading text-xl mb-2">Still have questions?</h3>
             <p className="text-muted-foreground mb-4">Our support team is here to help you 24/7</p>

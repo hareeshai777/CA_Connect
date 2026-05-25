@@ -140,7 +140,7 @@ export default function AIChatPage() {
             </p>
             <div className="flex flex-wrap gap-2">
               {suggestions.map((s) => (
-                <button key={s} className="text-xs bg-muted hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-950 border border-border rounded-xl px-3 py-1.5 transition-colors" onClick={() => sendMessage(s)}>
+                <button key={s} className="text-xs bg-muted hover:bg-brand-50 hover:text-brand-700 border border-border rounded-xl px-3 py-1.5 transition-colors" onClick={() => sendMessage(s)}>
                   {s}
                 </button>
               ))}

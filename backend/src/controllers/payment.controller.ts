@@ -3,15 +3,20 @@ import crypto from "crypto";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { sendSuccess, sendError } from "../utils/apiResponse";
-import { sendEmail, emailTemplates } from "../services/email.service";
+import { sendEmail } from "../services/email.service";
 import { whatsappService } from "../services/whatsapp.service";
 
 export const razorpayWebhook = async (req: Request, res: Response) => {
+  const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET as string | undefined;
+  if (!webhookSecret) {
+    return res.status(400).json({ success: false, message: "Webhook not configured" });
+  }
+
   const signature = req.headers["x-razorpay-signature"] as string;
   const body = JSON.stringify(req.body);
 
   const expectedSig = crypto
-    .createHmac("sha256", env.RAZORPAY_WEBHOOK_SECRET)
+    .createHmac("sha256", webhookSecret)
     .update(body)
     .digest("hex");
 

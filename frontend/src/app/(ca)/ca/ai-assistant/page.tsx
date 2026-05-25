@@ -59,8 +59,8 @@ export default function CAAssistantPage() {
         <AnimatePresence initial={false}>
           {messages.map((m, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.role === "assistant" ? "bg-brand-600" : "bg-gray-200 dark:bg-gray-700"}`}>
-                {m.role === "assistant" ? <Bot className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.role === "assistant" ? "bg-brand-600" : "bg-gray-200"}`}>
+                {m.role === "assistant" ? <Bot className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-gray-600" />}
               </div>
               <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 m.role === "assistant"

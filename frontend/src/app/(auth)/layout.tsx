@@ -17,7 +17,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
               <Briefcase className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white font-heading">CA<span className="text-gold-400">Pro</span></span>
+            <span className="text-2xl font-bold text-white font-heading">CA<span className="text-gold-400">Connect</span></span>
           </Link>
         </div>
 
@@ -44,7 +44,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         <div className="relative z-10 text-brand-300 text-sm">
-          © {new Date().getFullYear()} CA Pro Platform. All rights reserved.
+          © {new Date().getFullYear()} CAConnect Platform. All rights reserved.
         </div>
       </div>
 
@@ -57,7 +57,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <div className="w-9 h-9 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold font-heading">CA<span className="text-brand-600">Pro</span></span>
+              <span className="text-xl font-bold font-heading">CA<span className="text-brand-600">Connect</span></span>
             </Link>
           </div>
           {children}

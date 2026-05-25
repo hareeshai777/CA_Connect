@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -98,11 +99,97 @@ async function main() {
   });
   console.log("✅ Demo client created: client@demo.com / Client@123");
 
+  // Demo CA Professional
+  const caPassword = await bcrypt.hash("CA@123456", 12);
+  const caGstService = await prisma.service.findUnique({ where: { slug: "gst-filing" } });
+  const caTaxService = await prisma.service.findUnique({ where: { slug: "income-tax-filing" } });
+  await prisma.user.upsert({
+    where: { email: "ca@demo.com" },
+    update: {},
+    create: {
+      email: "ca@demo.com",
+      phone: "+919876500001",
+      passwordHash: caPassword,
+      role: "CA_PROFESSIONAL",
+      isEmailVerified: true,
+      caProfessional: {
+        create: {
+          firstName: "Priya",
+          lastName: "Menon",
+          bio: "Expert CA with 12+ years experience in GST, income tax, and startup consulting. ICAI member since 2012.",
+          membershipNumber: "ICAI-MH-2012-45678",
+          experienceYears: 12,
+          consultationFee: 49900,
+          city: "Mumbai",
+          state: "Maharashtra",
+          languages: "English, Hindi, Marathi",
+          status: "ACTIVE",
+          isAvailable: true,
+          averageRating: 4.9,
+          totalReviews: 127,
+          totalConsultations: 340,
+          ...(caGstService && caTaxService ? {
+            specializations: {
+              create: [
+                { serviceId: caGstService.id, expertiseLevel: 5 },
+                { serviceId: caTaxService.id, expertiseLevel: 4 },
+              ],
+            },
+          } : {}),
+        },
+      },
+    },
+  });
+  console.log("✅ Demo CA created: ca@demo.com / CA@123456");
+
+  // Demo Assistance Team Member
+  const assistancePassword = await bcrypt.hash("Assist@123", 12);
+  await prisma.user.upsert({
+    where: { email: "assistance@demo.com" },
+    update: {},
+    create: {
+      email: "assistance@demo.com",
+      phone: "+919876500002",
+      passwordHash: assistancePassword,
+      role: "ASSISTANCE_TEAM",
+      isEmailVerified: true,
+      assistanceMember: {
+        create: {
+          firstName: "Anjali",
+          lastName: "Sharma",
+          designation: "Senior Document Verifier",
+          department: "Operations",
+          isActive: true,
+        },
+      },
+    },
+  });
+  console.log("✅ Demo assistance team member created: assistance@demo.com / Assist@123");
+
+  // Default Commission Settings
+  await prisma.commissionSettings.upsert({
+    where: { id: "default-commission" },
+    update: {},
+    create: {
+      id: "default-commission",
+      platformCommissionPct: 20,
+      caCommissionPct: 70,
+      assistanceTeamPct: 10,
+      consultationFeeFixed: 49900,
+      isActive: true,
+    },
+  });
+  console.log("✅ Default commission settings seeded");
+
   console.log("\n🎉 Seeding complete!");
-  console.log("─────────────────────────────");
-  console.log("Admin:  admin@casaas.com / Admin@123456");
-  console.log("Client: client@demo.com  / Client@123");
-  console.log("─────────────────────────────");
+  console.log("─────────────────────────────────────────────────");
+  console.log("ROLE              EMAIL                  PASSWORD");
+  console.log("─────────────────────────────────────────────────");
+  console.log("Super Admin     | admin@casaas.com     | Admin@123456");
+  console.log("Client          | client@demo.com      | Client@123");
+  console.log("CA Professional | ca@demo.com          | CA@123456");
+  console.log("Assistance Team | assistance@demo.com  | Assist@123");
+  console.log("─────────────────────────────────────────────────");
 }
 
 main()

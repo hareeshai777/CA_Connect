@@ -72,6 +72,17 @@ router.post(
   authController.resetPassword
 );
 
+router.put(
+  "/change-password",
+  authenticate,
+  [
+    body("currentPassword").notEmpty().withMessage("Current password is required"),
+    body("newPassword").isLength({ min: 8 }).withMessage("New password must be at least 8 characters"),
+  ],
+  validate,
+  authController.changePassword
+);
+
 router.get("/me", authenticate, authController.getMe);
 
 export default router;

@@ -12,16 +12,22 @@ interface UserProfile {
   companyName?: string;
   status?: string;
   isAvailable?: boolean;
+  designation?: string;
+  department?: string;
+  isActive?: boolean;
+  membershipNumber?: string;
 }
 
 interface AuthUser {
   id: string;
   email: string;
   phone?: string;
-  role: "CLIENT" | "CA_PROFESSIONAL" | "SUPER_ADMIN";
+  role: "CLIENT" | "CA_PROFESSIONAL" | "SUPER_ADMIN" | "ASSISTANCE_TEAM";
   isEmailVerified: boolean;
   clientProfile?: UserProfile;
   caProfessional?: UserProfile;
+  assistanceMember?: UserProfile;
+  admin?: { id: string; firstName: string; lastName: string };
 }
 
 interface AuthState {

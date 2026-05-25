@@ -78,10 +78,10 @@ export default function CASettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-card rounded-2xl border border-red-200 dark:border-red-900 p-6">
+        <div className="bg-card rounded-2xl border border-red-200 p-6">
           <h3 className="font-semibold font-heading text-red-600 mb-1">Danger Zone</h3>
           <p className="text-xs text-muted-foreground mb-4">Irreversible actions — proceed with caution</p>
-          <Button variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-xl" onClick={() => { logout(); }}>
+          <Button variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-50:bg-red-950 rounded-xl" onClick={() => { logout(); }}>
             Deactivate Account
           </Button>
         </div>

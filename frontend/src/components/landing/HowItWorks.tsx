@@ -1,48 +1,43 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Search, Calendar, CreditCard, Video, CheckCircle } from "lucide-react";
+import { FileSearch, CreditCard, Video, ClipboardCheck, CheckCircle } from "lucide-react";
 
 const steps = [
   {
-    step: "01",
-    icon: Search,
-    title: "Find Your CA",
-    description: "Browse verified CA professionals by specialization, location, or use our AI-powered recommendation engine to find your perfect match.",
-    color: "from-blue-500 to-blue-600",
-    bg: "bg-blue-50 dark:bg-blue-950",
+    icon: FileSearch,
+    title: "Select a Service",
+    description: "Browse 10+ CA services — GST, income tax, company registration, audit, compliance, and more.",
+    color: "from-blue-500 to-cyan-500",
+    tag: "Step 1",
   },
   {
-    step: "02",
-    icon: Calendar,
-    title: "Book a Time Slot",
-    description: "View real-time availability and choose a convenient time slot that works for your schedule. All times are in IST.",
-    color: "from-purple-500 to-purple-600",
-    bg: "bg-purple-50 dark:bg-purple-950",
-  },
-  {
-    step: "03",
     icon: CreditCard,
-    title: "Secure Payment",
-    description: "Pay securely via Razorpay with UPI, cards, or net banking. Your consultation fee is protected with our money-back guarantee.",
-    color: "from-green-500 to-green-600",
-    bg: "bg-green-50 dark:bg-green-950",
+    title: "Pay ₹499 Consultation Fee",
+    description: "Pay the mandatory ₹499 initial consultation fee securely via Razorpay. UPI, cards & net banking accepted.",
+    color: "from-purple-500 to-violet-500",
+    tag: "Step 2",
   },
   {
-    step: "04",
     icon: Video,
-    title: "Meet on Google Meet",
-    description: "A Google Meet link is auto-generated and sent to both you and your CA. Calendar events are added automatically.",
-    color: "from-orange-500 to-orange-600",
-    bg: "bg-orange-50 dark:bg-orange-950",
+    title: "Auto-Scheduled Google Meet",
+    description: "A Google Meet link is auto-generated and sent instantly to your WhatsApp and email.",
+    color: "from-green-500 to-emerald-500",
+    tag: "Step 3",
   },
   {
-    step: "05",
+    icon: ClipboardCheck,
+    title: "Document Verification",
+    description: "Our Assistance Team verifies all your documents and coordinates with your assigned CA professional.",
+    color: "from-orange-500 to-amber-500",
+    tag: "Step 4",
+  },
+  {
     icon: CheckCircle,
-    title: "Get Expert Advice",
-    description: "Have your consultation, get expert guidance, and access documents and notes directly from your dashboard.",
-    color: "from-teal-500 to-teal-600",
-    bg: "bg-teal-50 dark:bg-teal-950",
+    title: "Service Completion",
+    description: "Your CA completes the service with full compliance. Track status in real-time on your dashboard.",
+    color: "from-teal-500 to-cyan-600",
+    tag: "Step 5",
   },
 ];
 
@@ -65,41 +60,43 @@ export function HowItWorks() {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl font-bold font-heading mb-4"
           >
-            From Search to Consultation in Minutes
+            Book to Completion in 5 Simple Steps
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-xl text-muted-foreground"
+            className="text-xl text-muted-foreground max-w-2xl mx-auto"
           >
-            A seamless experience from finding your CA to the actual consultation.
+            Start with a ₹499 consultation — our Assistance Team handles everything from document verification to service delivery.
           </motion.p>
         </div>
 
         <div className="relative">
-          {/* Connector line */}
-          <div className="hidden lg:block absolute top-16 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-blue-200 via-purple-200 via-green-200 via-orange-200 to-teal-200 dark:from-blue-900 dark:via-purple-900 dark:via-green-900 dark:via-orange-900 dark:to-teal-900" />
+          {/* Connector line desktop */}
+          <div className="hidden lg:block absolute top-[2.75rem] left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-blue-200 via-purple-200 to-teal-200 z-0" />
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
             {steps.map((step, index) => (
               <motion.div
-                key={step.step}
+                key={step.tag}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center relative"
+                className="text-center relative z-10"
               >
-                {/* Step number */}
-                <div className={`relative w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg shadow-brand-200/30 dark:shadow-none`}>
-                  <step.icon className="w-7 h-7 text-white" />
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-white dark:bg-gray-800 border-2 border-brand-200 dark:border-gray-700 rounded-full flex items-center justify-center text-xs font-bold text-brand-700 dark:text-brand-400">
+                <div className={`relative w-14 h-14 mx-auto mb-5 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}>
+                  <step.icon className="w-6 h-6 text-white" />
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-white border-2 border-border rounded-full flex items-center justify-center text-[10px] font-bold text-foreground">
                     {index + 1}
                   </div>
                 </div>
-                <h3 className="font-semibold font-heading text-lg mb-2">{step.title}</h3>
+                <span className={`inline-block text-[10px] font-semibold bg-gradient-to-r ${step.color} bg-clip-text text-transparent mb-2`}>
+                  {step.tag}
+                </span>
+                <h3 className="font-bold font-heading text-base mb-2">{step.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
               </motion.div>
             ))}

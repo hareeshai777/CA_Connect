@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,6 +26,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { setAuth, fetchMe } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) });
 
@@ -37,8 +39,11 @@ export default function LoginPage() {
       setAuth({ id: "", email: data.email, role, isEmailVerified: true }, accessToken, refreshToken);
       await fetchMe();
       toast.success("Welcome back!");
-      if (role === "SUPER_ADMIN") router.push("/admin/dashboard");
+      if (redirect && role === "CLIENT") {
+        router.push(redirect);
+      } else if (role === "SUPER_ADMIN") router.push("/admin/dashboard");
       else if (role === "CA_PROFESSIONAL") router.push("/ca/dashboard");
+      else if (role === "ASSISTANCE_TEAM") router.push("/assistance/dashboard");
       else router.push("/client/dashboard");
     } catch (err) {
       toast.error(getErrorMessage(err));

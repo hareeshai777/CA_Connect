@@ -4,7 +4,7 @@
   "description": "CA SaaS Platform - Backend API",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/server.ts",
+    "dev": "lsof -ti :5001 | xargs kill -9 2>/dev/null; nodemon --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",

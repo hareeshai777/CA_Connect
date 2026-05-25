@@ -73,7 +73,7 @@ export default function RegisterPage() {
   if (step === "verify") {
     return (
       <div className="text-center">
-        <div className="w-16 h-16 bg-brand-100 dark:bg-brand-950 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
           <Mail className="w-8 h-8 text-brand-600" />
         </div>
         <h1 className="text-3xl font-bold font-heading mb-2">Verify your email</h1>

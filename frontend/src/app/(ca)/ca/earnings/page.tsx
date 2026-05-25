@@ -32,10 +32,10 @@ export default function EarningsPage() {
   }, []);
 
   const kpis = [
-    { label: "Total Earnings", value: stats ? formatCurrency((stats.totalEarnings || 0) * 100) : "—", icon: IndianRupee, color: "text-brand-600", bg: "bg-brand-50 dark:bg-brand-950" },
-    { label: "This Month", value: stats ? formatCurrency((stats.thisMonthEarnings || 0) * 100) : "—", icon: TrendingUp, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950" },
-    { label: "Total Bookings", value: stats?.totalBookings ?? "—", icon: Calendar, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950" },
-    { label: "Avg per Booking", value: stats?.totalEarnings && stats?.totalBookings ? formatCurrency((stats.totalEarnings / stats.totalBookings) * 100) : "—", icon: IndianRupee, color: "text-gold-600", bg: "bg-yellow-50 dark:bg-yellow-950" },
+    { label: "Total Earnings", value: stats ? formatCurrency((stats.totalEarnings || 0) * 100) : "—", icon: IndianRupee, color: "text-brand-600", bg: "bg-brand-50" },
+    { label: "This Month", value: stats ? formatCurrency((stats.thisMonthEarnings || 0) * 100) : "—", icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Total Bookings", value: stats?.totalBookings ?? "—", icon: Calendar, color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "Avg per Booking", value: stats?.totalEarnings && stats?.totalBookings ? formatCurrency((stats.totalEarnings / stats.totalBookings) * 100) : "—", icon: IndianRupee, color: "text-gold-600", bg: "bg-yellow-50" },
   ];
 
   return (

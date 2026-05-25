@@ -52,11 +52,11 @@ export const register = async (req: Request, res: Response) => {
 
   if (role === "CLIENT") {
     await prisma.clientProfile.create({
-      data: {
-        userId: user.id,
-        firstName,
-        lastName,
-      },
+      data: { userId: user.id, firstName, lastName },
+    });
+  } else if (role === "ASSISTANCE_TEAM") {
+    await prisma.assistanceMember.create({
+      data: { userId: user.id, firstName, lastName },
     });
   }
 
@@ -265,6 +265,22 @@ export const resetPassword = async (req: Request, res: Response) => {
   return sendSuccess(res, "Password reset successfully");
 };
 
+export const changePassword = async (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user!.userId;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.passwordHash) return sendError(res, "User not found", 404);
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) return sendError(res, "Current password is incorrect", 400);
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+  return sendSuccess(res, "Password changed successfully");
+};
+
 export const getMe = async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.userId },
@@ -293,6 +309,24 @@ export const getMe = async (req: Request, res: Response) => {
           avatarUrl: true,
           status: true,
           isAvailable: true,
+        },
+      },
+      assistanceMember: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          designation: true,
+          department: true,
+          isActive: true,
+        },
+      },
+      admin: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
         },
       },
     },

@@ -50,6 +50,22 @@ export const registerCA = async (req: Request, res: Response) => {
     });
   }
 
+  // Demo mode: Razorpay not configured — skip payment and activate directly
+  if (!razorpay) {
+    await prisma.cAProfessional.update({
+      where: { id: ca.id },
+      data: { status: "PENDING_APPROVAL" },
+    });
+    return sendSuccess(res, "CA profile created. Account is under review.", {
+      caId: ca.id,
+      razorpayOrderId: null,
+      amount: env.CA_ONBOARDING_FEE,
+      currency: "INR",
+      key: null,
+      demoMode: true,
+    }, 201);
+  }
+
   const orderId = generateOrderId();
   const order = await razorpay.orders.create({
     amount: env.CA_ONBOARDING_FEE,
@@ -76,6 +92,7 @@ export const registerCA = async (req: Request, res: Response) => {
     amount: env.CA_ONBOARDING_FEE,
     currency: "INR",
     key: env.RAZORPAY_KEY_ID,
+    demoMode: false,
   }, 201);
 };
 

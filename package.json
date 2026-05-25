@@ -1,0 +1,31 @@
+{
+  "name": "ca",
+  "version": "1.0.0",
+  "description": "A production-ready SaaS web application connecting CA professionals with clients across India.",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:auth": "playwright test tests/e2e/01-auth.spec.ts",
+    "test:landing": "playwright test tests/e2e/02-landing.spec.ts",
+    "test:client": "playwright test tests/e2e/03-client.spec.ts",
+    "test:ca": "playwright test tests/e2e/04-ca.spec.ts",
+    "test:assistance": "playwright test tests/e2e/05-assistance.spec.ts",
+    "test:admin": "playwright test tests/e2e/06-admin.spec.ts",
+    "test:report": "playwright show-report tests/report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hareeshai777/CA_Connect.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hareeshai777/CA_Connect/issues"
+  },
+  "homepage": "https://github.com/hareeshai777/CA_Connect#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
