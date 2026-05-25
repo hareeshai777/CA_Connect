@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -21,7 +21,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function LoginPage() {
+function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { setAuth, fetchMe } = useAuthStore();
@@ -63,7 +63,6 @@ export default function LoginPage() {
         <p className="text-muted-foreground">Sign in to your CA Pro account</p>
       </div>
 
-      {/* Google Sign In */}
       <Button variant="outline" className="w-full rounded-xl mb-6 h-11 gap-3" onClick={handleGoogleSignIn} type="button">
         <svg viewBox="0 0 24 24" className="w-5 h-5">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -88,12 +87,7 @@ export default function LoginPage() {
           <Label>Email address</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              className="pl-10 h-11"
-              {...register("email")}
-            />
+            <Input type="email" placeholder="you@example.com" className="pl-10 h-11" {...register("email")} />
           </div>
           {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
@@ -105,12 +99,7 @@ export default function LoginPage() {
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              className="pl-10 pr-10 h-11"
-              {...register("password")}
-            />
+            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" className="pl-10 pr-10 h-11" {...register("password")} />
             <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -134,5 +123,13 @@ export default function LoginPage() {
         <Link href="/ca/register" className="text-brand-600 font-medium hover:underline">Register here</Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
