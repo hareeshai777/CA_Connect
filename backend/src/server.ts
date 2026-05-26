@@ -31,8 +31,27 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
+const allowedOrigins = new Set([
+  "http://localhost:3000",
+  "http://localhost:3001",
+  env.FRONTEND_URL,
+  ...(process.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? []),
+]);
+
+const isAllowedOrigin = (origin: string): boolean => {
+  if (allowedOrigins.has(origin)) return true;
+  // Allow any Vercel deployment (preview + production)
+  if (/^https:\/\/.*\.vercel\.app$/.test(origin)) return true;
+  // Allow any Netlify deployment
+  if (/^https:\/\/.*\.netlify\.app$/.test(origin)) return true;
+  return false;
+};
+
 app.use(cors({
-  origin: [env.FRONTEND_URL, "http://localhost:3000"],
+  origin: (origin, callback) => {
+    if (!origin || isAllowedOrigin(origin)) return callback(null, true);
+    callback(null, false);
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-razorpay-signature"],
