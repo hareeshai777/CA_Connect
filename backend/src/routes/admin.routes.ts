@@ -40,7 +40,7 @@ router.get("/services", async (_req, res) => {
 router.patch("/services/:id", async (req, res) => {
   try {
     const { prisma } = await import("../config/prisma");
-    const { name, shortDescription, basePrice, isActive, isFeatured, sortOrder } = req.body;
+    const { name, shortDescription, basePrice, isActive, isFeatured, showPrice, sortOrder } = req.body;
     const updated = await prisma.service.update({
       where: { id: req.params.id },
       data: {
@@ -49,6 +49,7 @@ router.patch("/services/:id", async (req, res) => {
         ...(basePrice !== undefined && { basePrice: Number(basePrice) }),
         ...(isActive !== undefined && { isActive }),
         ...(isFeatured !== undefined && { isFeatured }),
+        ...(showPrice !== undefined && { showPrice }),
         ...(sortOrder !== undefined && { sortOrder: Number(sortOrder) }),
       },
     });

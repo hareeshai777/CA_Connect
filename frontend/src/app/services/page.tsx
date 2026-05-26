@@ -44,16 +44,16 @@ const colorMap: Record<string, string> = {
 
 // Static fallback so the page works even before the backend is connected
 const STATIC_SERVICES = [
-  { id: "s1", name: "GST Filing", slug: "gst-filing", shortDescription: "Complete GST registration, monthly returns, annual filing & compliance management.", basePrice: 149900, category: "GST", isFeatured: true, _count: { specializations: 42 } },
-  { id: "s2", name: "Income Tax Filing", slug: "income-tax-filing", shortDescription: "Individual and corporate ITR filing with maximum deductions and refund processing.", basePrice: 99900, category: "TAX", isFeatured: true, _count: { specializations: 78 } },
-  { id: "s3", name: "Company Registration", slug: "company-registration", shortDescription: "Pvt Ltd, LLP, OPC & Section 8 company incorporation end-to-end.", basePrice: 499900, category: "REGISTRATION", isFeatured: true, _count: { specializations: 35 } },
-  { id: "s4", name: "Audit Services", slug: "audit-services", shortDescription: "Statutory, tax, internal and concurrent audit with detailed reporting.", basePrice: 999900, category: "AUDIT", isFeatured: false, _count: { specializations: 28 } },
-  { id: "s5", name: "Trademark Registration", slug: "trademark-registration", shortDescription: "Brand protection through trademark filing, search and monitoring.", basePrice: 299900, category: "REGISTRATION", isFeatured: false, _count: { specializations: 19 } },
-  { id: "s6", name: "Business Compliance", slug: "business-compliance", shortDescription: "ROC filings, board minutes, statutory registers & annual compliance calendar.", basePrice: 299900, category: "COMPLIANCE", isFeatured: false, _count: { specializations: 31 } },
-  { id: "s7", name: "Startup Consulting", slug: "startup-consulting", shortDescription: "End-to-end startup advisory, funding guidance, compliance planning & financial modelling.", basePrice: 199900, category: "CONSULTING", isFeatured: true, _count: { specializations: 22 } },
-  { id: "s8", name: "Financial Planning", slug: "financial-planning", shortDescription: "Investment, retirement & tax-efficient wealth management for individuals and families.", basePrice: 149900, category: "FINANCIAL_PLANNING", isFeatured: false, _count: { specializations: 17 } },
-  { id: "s9", name: "Accounting Services", slug: "accounting-services", shortDescription: "Daily bookkeeping, P&L statements, balance sheet and MIS reporting.", basePrice: 199900, category: "ACCOUNTING", isFeatured: false, _count: { specializations: 25 } },
-  { id: "s10", name: "Payroll Services", slug: "payroll-services", shortDescription: "Salary processing, PF/ESI compliance, TDS deduction & Form 16 generation.", basePrice: 149900, category: "PAYROLL", isFeatured: false, _count: { specializations: 20 } },
+  { id: "s1", name: "GST Filing", slug: "gst-filing", shortDescription: "Complete GST registration, monthly returns, annual filing & compliance management.", basePrice: 149900, showPrice: true, category: "GST", isFeatured: true, _count: { specializations: 42 } },
+  { id: "s2", name: "Income Tax Filing", slug: "income-tax-filing", shortDescription: "Individual and corporate ITR filing with maximum deductions and refund processing.", basePrice: 99900, showPrice: true, category: "TAX", isFeatured: true, _count: { specializations: 78 } },
+  { id: "s3", name: "Company Registration", slug: "company-registration", shortDescription: "Pvt Ltd, LLP, OPC & Section 8 company incorporation end-to-end.", basePrice: 499900, showPrice: true, category: "REGISTRATION", isFeatured: true, _count: { specializations: 35 } },
+  { id: "s4", name: "Audit Services", slug: "audit-services", shortDescription: "Statutory, tax, internal and concurrent audit with detailed reporting.", basePrice: 999900, showPrice: true, category: "AUDIT", isFeatured: false, _count: { specializations: 28 } },
+  { id: "s5", name: "Trademark Registration", slug: "trademark-registration", shortDescription: "Brand protection through trademark filing, search and monitoring.", basePrice: 299900, showPrice: true, category: "REGISTRATION", isFeatured: false, _count: { specializations: 19 } },
+  { id: "s6", name: "Business Compliance", slug: "business-compliance", shortDescription: "ROC filings, board minutes, statutory registers & annual compliance calendar.", basePrice: 299900, showPrice: true, category: "COMPLIANCE", isFeatured: false, _count: { specializations: 31 } },
+  { id: "s7", name: "Startup Consulting", slug: "startup-consulting", shortDescription: "End-to-end startup advisory, funding guidance, compliance planning & financial modelling.", basePrice: 199900, showPrice: true, category: "CONSULTING", isFeatured: true, _count: { specializations: 22 } },
+  { id: "s8", name: "Financial Planning", slug: "financial-planning", shortDescription: "Investment, retirement & tax-efficient wealth management for individuals and families.", basePrice: 149900, showPrice: true, category: "FINANCIAL_PLANNING", isFeatured: false, _count: { specializations: 17 } },
+  { id: "s9", name: "Accounting Services", slug: "accounting-services", shortDescription: "Daily bookkeeping, P&L statements, balance sheet and MIS reporting.", basePrice: 199900, showPrice: true, category: "ACCOUNTING", isFeatured: false, _count: { specializations: 25 } },
+  { id: "s10", name: "Payroll Services", slug: "payroll-services", shortDescription: "Salary processing, PF/ESI compliance, TDS deduction & Form 16 generation.", basePrice: 149900, showPrice: true, category: "PAYROLL", isFeatured: false, _count: { specializations: 20 } },
 ];
 
 const CATEGORIES = ["All", "TAX", "GST", "AUDIT", "REGISTRATION", "COMPLIANCE", "CONSULTING", "ACCOUNTING", "PAYROLL", "FINANCIAL_PLANNING"];
@@ -196,8 +196,14 @@ export default function ServicesPage() {
                         {/* Footer */}
                         <div className="flex items-center justify-between pt-4 border-t border-border">
                           <div>
-                            <span className="text-xs text-muted-foreground">Starting from</span>
-                            <p className="text-lg font-bold text-brand-600">{formatCurrency(service.basePrice)}</p>
+                            {service.showPrice !== false ? (
+                              <>
+                                <span className="text-xs text-muted-foreground">Starting from</span>
+                                <p className="text-lg font-bold text-brand-600">{formatCurrency(service.basePrice)}</p>
+                              </>
+                            ) : (
+                              <span className="text-sm font-medium text-brand-600">Get a Quote</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Users className="w-3.5 h-3.5" />

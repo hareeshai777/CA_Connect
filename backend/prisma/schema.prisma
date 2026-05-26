@@ -272,6 +272,7 @@ model Service {
   bannerUrl        String?
   isActive         Boolean         @default(true)
   isFeatured       Boolean         @default(false)
+  showPrice        Boolean         @default(true)
   sortOrder        Int             @default(0)
   metaTitle        String?
   metaDescription  String?

@@ -1,124 +1,57 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, FileText, Building, BarChart3, Shield, CheckSquare, Lightbulb, TrendingUp, BookOpen, Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 
-const services = [
-  {
-    icon: FileText,
-    name: "GST Filing",
-    slug: "gst-filing",
-    desc: "Complete GST registration, returns, and compliance management.",
-    tag: "Most Popular",
-    gradient: "from-blue-500 to-cyan-500",
-    bgGradient: "from-blue-50 to-cyan-50",
-    borderColor: "border-blue-200",
-    price: "₹1,499",
-  },
-  {
-    icon: BarChart3,
-    name: "Income Tax Filing",
-    slug: "income-tax-filing",
-    desc: "Individual and corporate ITR filing with maximum deductions.",
-    tag: "High Demand",
-    gradient: "from-green-500 to-emerald-500",
-    bgGradient: "from-green-50 to-emerald-50",
-    borderColor: "border-green-200",
-    price: "₹999",
-  },
-  {
-    icon: Building,
-    name: "Company Registration",
-    slug: "company-registration",
-    desc: "Pvt Ltd, LLP, OPC, and Section 8 company incorporation.",
-    tag: "Complete Package",
-    gradient: "from-purple-500 to-violet-500",
-    bgGradient: "from-purple-50 to-violet-50",
-    borderColor: "border-purple-200",
-    price: "₹4,999",
-  },
-  {
-    icon: Shield,
-    name: "Audit Services",
-    slug: "audit-services",
-    desc: "Statutory, tax, internal and concurrent audit services.",
-    tag: "Enterprise",
-    gradient: "from-red-500 to-rose-500",
-    bgGradient: "from-red-50 to-rose-50",
-    borderColor: "border-red-200",
-    price: "₹9,999",
-  },
-  {
-    icon: CheckSquare,
-    name: "Trademark Registration",
-    slug: "trademark-registration",
-    desc: "Brand protection through trademark filing and monitoring.",
-    tag: "IP Protection",
-    gradient: "from-orange-500 to-amber-500",
-    bgGradient: "from-orange-50 to-amber-50",
-    borderColor: "border-orange-200",
-    price: "₹2,999",
-  },
-  {
-    icon: Shield,
-    name: "Business Compliance",
-    slug: "business-compliance",
-    desc: "ROC filings, annual returns, and regulatory compliance.",
-    tag: "Recurring",
-    gradient: "from-teal-500 to-cyan-600",
-    bgGradient: "from-teal-50 to-cyan-50",
-    borderColor: "border-teal-200",
-    price: "₹2,999",
-  },
-  {
-    icon: Lightbulb,
-    name: "Startup Consulting",
-    slug: "startup-consulting",
-    desc: "End-to-end startup advisory, funding & compliance planning.",
-    tag: "Startup Special",
-    gradient: "from-yellow-500 to-orange-400",
-    bgGradient: "from-yellow-50 to-orange-50",
-    borderColor: "border-yellow-200",
-    price: "₹1,999",
-  },
-  {
-    icon: TrendingUp,
-    name: "Financial Planning",
-    slug: "financial-planning",
-    desc: "Investment, retirement & tax-efficient wealth management.",
-    tag: "Advisory",
-    gradient: "from-indigo-500 to-blue-600",
-    bgGradient: "from-indigo-50 to-blue-50",
-    borderColor: "border-indigo-200",
-    price: "₹1,499",
-  },
-  {
-    icon: BookOpen,
-    name: "Accounting Services",
-    slug: "accounting-services",
-    desc: "Daily bookkeeping, P&L, balance sheet, and MIS reports.",
-    tag: "Monthly Plan",
-    gradient: "from-pink-500 to-rose-500",
-    bgGradient: "from-pink-50 to-rose-50",
-    borderColor: "border-pink-200",
-    price: "₹1,999",
-  },
-  {
-    icon: Users,
-    name: "Payroll Services",
-    slug: "payroll-services",
-    desc: "Salary processing, PF/ESI, TDS, and Form 16 generation.",
-    tag: "HR Friendly",
-    gradient: "from-cyan-500 to-sky-500",
-    bgGradient: "from-cyan-50 to-sky-50",
-    borderColor: "border-cyan-200",
-    price: "₹1,499",
-  },
+const STATIC_SERVICES = [
+  { slug: "gst-filing", name: "GST Filing", desc: "Complete GST registration, returns, and compliance management.", tag: "Most Popular", gradient: "from-blue-500 to-cyan-500", bgGradient: "from-blue-50 to-cyan-50", borderColor: "border-blue-200", icon: FileText, basePrice: 149900, showPrice: true },
+  { slug: "income-tax-filing", name: "Income Tax Filing", desc: "Individual and corporate ITR filing with maximum deductions.", tag: "High Demand", gradient: "from-green-500 to-emerald-500", bgGradient: "from-green-50 to-emerald-50", borderColor: "border-green-200", icon: BarChart3, basePrice: 99900, showPrice: true },
+  { slug: "company-registration", name: "Company Registration", desc: "Pvt Ltd, LLP, OPC, and Section 8 company incorporation.", tag: "Complete Package", gradient: "from-purple-500 to-violet-500", bgGradient: "from-purple-50 to-violet-50", borderColor: "border-purple-200", icon: Building, basePrice: 499900, showPrice: true },
+  { slug: "audit-services", name: "Audit Services", desc: "Statutory, tax, internal and concurrent audit services.", tag: "Enterprise", gradient: "from-red-500 to-rose-500", bgGradient: "from-red-50 to-rose-50", borderColor: "border-red-200", icon: Shield, basePrice: 999900, showPrice: true },
+  { slug: "trademark-registration", name: "Trademark Registration", desc: "Brand protection through trademark filing and monitoring.", tag: "IP Protection", gradient: "from-orange-500 to-amber-500", bgGradient: "from-orange-50 to-amber-50", borderColor: "border-orange-200", icon: CheckSquare, basePrice: 299900, showPrice: true },
+  { slug: "business-compliance", name: "Business Compliance", desc: "ROC filings, annual returns, and regulatory compliance.", tag: "Recurring", gradient: "from-teal-500 to-cyan-600", bgGradient: "from-teal-50 to-cyan-50", borderColor: "border-teal-200", icon: Shield, basePrice: 299900, showPrice: true },
+  { slug: "startup-consulting", name: "Startup Consulting", desc: "End-to-end startup advisory, funding & compliance planning.", tag: "Startup Special", gradient: "from-yellow-500 to-orange-400", bgGradient: "from-yellow-50 to-orange-50", borderColor: "border-yellow-200", icon: Lightbulb, basePrice: 199900, showPrice: true },
+  { slug: "financial-planning", name: "Financial Planning", desc: "Investment, retirement & tax-efficient wealth management.", tag: "Advisory", gradient: "from-indigo-500 to-blue-600", bgGradient: "from-indigo-50 to-blue-50", borderColor: "border-indigo-200", icon: TrendingUp, basePrice: 149900, showPrice: true },
+  { slug: "accounting-services", name: "Accounting Services", desc: "Daily bookkeeping, P&L, balance sheet, and MIS reports.", tag: "Monthly Plan", gradient: "from-pink-500 to-rose-500", bgGradient: "from-pink-50 to-rose-50", borderColor: "border-pink-200", icon: BookOpen, basePrice: 199900, showPrice: true },
+  { slug: "payroll-services", name: "Payroll Services", desc: "Salary processing, PF/ESI, TDS, and Form 16 generation.", tag: "HR Friendly", gradient: "from-cyan-500 to-sky-500", bgGradient: "from-cyan-50 to-sky-50", borderColor: "border-cyan-200", icon: Users, basePrice: 149900, showPrice: true },
 ];
 
+const styleMap: Record<string, { gradient: string; bgGradient: string; borderColor: string; tag: string; icon: any }> = {
+  "gst-filing": { gradient: "from-blue-500 to-cyan-500", bgGradient: "from-blue-50 to-cyan-50", borderColor: "border-blue-200", tag: "Most Popular", icon: FileText },
+  "income-tax-filing": { gradient: "from-green-500 to-emerald-500", bgGradient: "from-green-50 to-emerald-50", borderColor: "border-green-200", tag: "High Demand", icon: BarChart3 },
+  "company-registration": { gradient: "from-purple-500 to-violet-500", bgGradient: "from-purple-50 to-violet-50", borderColor: "border-purple-200", tag: "Complete Package", icon: Building },
+  "audit-services": { gradient: "from-red-500 to-rose-500", bgGradient: "from-red-50 to-rose-50", borderColor: "border-red-200", tag: "Enterprise", icon: Shield },
+  "trademark-registration": { gradient: "from-orange-500 to-amber-500", bgGradient: "from-orange-50 to-amber-50", borderColor: "border-orange-200", tag: "IP Protection", icon: CheckSquare },
+  "business-compliance": { gradient: "from-teal-500 to-cyan-600", bgGradient: "from-teal-50 to-cyan-50", borderColor: "border-teal-200", tag: "Recurring", icon: Shield },
+  "startup-consulting": { gradient: "from-yellow-500 to-orange-400", bgGradient: "from-yellow-50 to-orange-50", borderColor: "border-yellow-200", tag: "Startup Special", icon: Lightbulb },
+  "financial-planning": { gradient: "from-indigo-500 to-blue-600", bgGradient: "from-indigo-50 to-blue-50", borderColor: "border-indigo-200", tag: "Advisory", icon: TrendingUp },
+  "accounting-services": { gradient: "from-pink-500 to-rose-500", bgGradient: "from-pink-50 to-rose-50", borderColor: "border-pink-200", tag: "Monthly Plan", icon: BookOpen },
+  "payroll-services": { gradient: "from-cyan-500 to-sky-500", bgGradient: "from-cyan-50 to-sky-50", borderColor: "border-cyan-200", tag: "HR Friendly", icon: Users },
+};
+
 export function ServicesSection() {
+  const [services, setServices] = useState(STATIC_SERVICES);
+
+  useEffect(() => {
+    api.get("/services")
+      .then((r) => {
+        if (r.data?.data?.length > 0) {
+          const merged = r.data.data.map((s: any) => ({
+            ...s,
+            desc: s.shortDescription || s.name,
+            ...(styleMap[s.slug] || styleMap["gst-filing"]),
+          }));
+          setServices(merged);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="section-padding relative overflow-hidden">
       {/* Background */}
@@ -158,41 +91,48 @@ export function ServicesSection() {
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-          {services.map((service, index) => (
-            <motion.div
-              key={service.slug}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.05, duration: 0.4 }}
-            >
-              <Link href={`/services/${service.slug}`} className="group block h-full">
-                <div className={`h-full bg-gradient-to-br ${service.bgGradient} rounded-2xl p-5 border ${service.borderColor} hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 relative overflow-hidden`}>
-                  {/* Tag */}
-                  <div className={`absolute top-3 right-3 text-[10px] font-semibold bg-gradient-to-r ${service.gradient} text-white px-2 py-0.5 rounded-full`}>
-                    {service.tag}
-                  </div>
+          {services.map((service, index) => {
+            const Icon = service.icon;
+            return (
+              <motion.div
+                key={service.slug}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05, duration: 0.4 }}
+              >
+                <Link href={`/services/${service.slug}`} className="group block h-full">
+                  <div className={`h-full bg-gradient-to-br ${service.bgGradient} rounded-2xl p-5 border ${service.borderColor} hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 relative overflow-hidden`}>
+                    {/* Tag */}
+                    <div className={`absolute top-3 right-3 text-[10px] font-semibold bg-gradient-to-r ${service.gradient} text-white px-2 py-0.5 rounded-full`}>
+                      {service.tag}
+                    </div>
 
-                  {/* Icon */}
-                  <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-                    <service.icon className="w-5 h-5 text-white" />
-                  </div>
+                    {/* Icon */}
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
 
-                  {/* Content */}
-                  <h3 className="font-bold font-heading text-sm mb-2 pr-12">{service.name}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">{service.desc}</p>
+                    {/* Content */}
+                    <h3 className="font-bold font-heading text-sm mb-2 pr-12">{service.name}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">{service.desc}</p>
 
-                  {/* Price + CTA */}
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className={`text-sm font-bold bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
-                      From {service.price}
-                    </span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-brand-600 transition-all" />
+                    {/* Price + CTA */}
+                    <div className="flex items-center justify-between mt-auto">
+                      {service.showPrice !== false ? (
+                        <span className={`text-sm font-bold bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
+                          From {formatCurrency(service.basePrice)}
+                        </span>
+                      ) : (
+                        <span className="text-sm font-bold text-brand-600">Get a Quote</span>
+                      )}
+                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-brand-600 transition-all" />
+                    </div>
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Bottom CTA */}

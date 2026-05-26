@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   PackageOpen, RefreshCw, Pencil, Check, X,
-  ToggleLeft, ToggleRight, Star, StarOff,
+  ToggleLeft, ToggleRight, Star, StarOff, Eye, EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ interface Service {
   basePrice: number;
   isActive: boolean;
   isFeatured: boolean;
+  showPrice: boolean;
   sortOrder: number;
   _count?: { bookings: number; specializations: number };
 }
@@ -79,11 +80,16 @@ export default function AdminServicesPage() {
     }
   };
 
-  const toggleField = async (svc: Service, field: "isActive" | "isFeatured") => {
+  const toggleField = async (svc: Service, field: "isActive" | "isFeatured" | "showPrice") => {
     try {
       await api.patch(`/admin/services/${svc.id}`, { [field]: !svc[field] });
       setServices(prev => prev.map(s => s.id === svc.id ? { ...s, [field]: !svc[field] } : s));
-      toast.success(`Service ${field === "isActive" ? (svc.isActive ? "deactivated" : "activated") : (svc.isFeatured ? "unfeatured" : "featured")}`);
+      const msg = field === "isActive"
+        ? (svc.isActive ? "deactivated" : "activated")
+        : field === "isFeatured"
+        ? (svc.isFeatured ? "unfeatured" : "featured")
+        : (svc.showPrice ? "price hidden from clients" : "price shown to clients");
+      toast.success(`Service ${msg}`);
     } catch {
       toast.error("Failed to update");
     }
@@ -192,7 +198,24 @@ export default function AdminServicesPage() {
 
                   {/* Toggles */}
                   {!isEditing && (
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-3 shrink-0">
+                      {/* Show Price toggle */}
+                      <button
+                        onClick={() => toggleField(svc, "showPrice")}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                          svc.showPrice
+                            ? "bg-blue-500/15 border-blue-500/40 text-blue-400 hover:bg-blue-500/25"
+                            : "bg-gray-700/50 border-gray-600 text-gray-400 hover:bg-gray-700"
+                        }`}
+                        title={svc.showPrice ? "Click to hide price from clients" : "Click to show price to clients"}
+                      >
+                        {svc.showPrice
+                          ? <Eye className="w-3.5 h-3.5" />
+                          : <EyeOff className="w-3.5 h-3.5" />}
+                        <span>{svc.showPrice ? "Price ON" : "Price OFF"}</span>
+                      </button>
+
+                      {/* Featured */}
                       <button
                         title={svc.isFeatured ? "Remove from featured" : "Mark as featured"}
                         onClick={() => toggleField(svc, "isFeatured")}
@@ -202,6 +225,8 @@ export default function AdminServicesPage() {
                           ? <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                           : <StarOff className="w-4 h-4 text-gray-500" />}
                       </button>
+
+                      {/* Active */}
                       <button
                         title={svc.isActive ? "Deactivate" : "Activate"}
                         onClick={() => toggleField(svc, "isActive")}

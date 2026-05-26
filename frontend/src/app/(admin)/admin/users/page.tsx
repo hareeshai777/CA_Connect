@@ -81,7 +81,7 @@ export default function UsersPage() {
   const getName = (u: any) => {
     if (u.role === "CA_PROFESSIONAL" && u.caProfessional) return `${u.caProfessional.firstName} ${u.caProfessional.lastName}`;
     if (u.clientProfile) return `${u.clientProfile.firstName} ${u.clientProfile.lastName}`;
-    return u.email.split("@")[0];
+    return (u.email || "").split("@")[0] || "Unknown";
   };
 
   const getPhone = (u: any) => u.clientProfile?.phone || u.caProfessional?.phone || "—";
@@ -163,11 +163,11 @@ export default function UsersPage() {
               ) : users.length === 0 ? (
                 <tr><td colSpan={6} className="py-16 text-center text-gray-500">No users found</td></tr>
               ) : (
-                users.map((u, i) => {
+                users.map((u) => {
                   const RoleIcon = roleIcon[u.role] || User;
                   return (
-                    <motion.tr key={u.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                      className="hover:bg-gray-800/50 cursor-pointer" onClick={() => setSelectedUser(selectedUser?.id === u.id ? null : u)}>
+                    <tr key={u.id}
+                      className="hover:bg-gray-800/50 cursor-pointer transition-colors" onClick={() => setSelectedUser(selectedUser?.id === u.id ? null : u)}>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
@@ -184,7 +184,7 @@ export default function UsersPage() {
                       </td>
                       <td className="py-4 px-4">
                         <Badge variant={roleVariant[u.role]} className="text-xs gap-1">
-                          <RoleIcon className="w-3 h-3" />{u.role.replace("_", " ")}
+                          <RoleIcon className="w-3 h-3" />{(u.role || "UNKNOWN").replace(/_/g, " ")}
                         </Badge>
                       </td>
                       <td className="py-4 px-4">
@@ -212,7 +212,7 @@ export default function UsersPage() {
                           </button>
                         )}
                       </td>
-                    </motion.tr>
+                    </tr>
                   );
                 })
               )}

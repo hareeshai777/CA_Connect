@@ -10,8 +10,12 @@ export const formatCurrency = (amount: number, currency = "INR") =>
     amount / 100
   );
 
-export const formatDate = (date: string | Date, opts?: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat("en-IN", opts || { dateStyle: "medium" }).format(new Date(date));
+export const formatDate = (date: string | Date | null | undefined, opts?: Intl.DateTimeFormatOptions) => {
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-IN", opts || { dateStyle: "medium" }).format(d);
+};
 
 export const formatDateTime = (date: string | Date) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(
@@ -22,7 +26,7 @@ export const truncate = (str: string, n: number) =>
   str.length > n ? str.slice(0, n - 1) + "…" : str;
 
 export const getInitials = (firstName: string, lastName?: string) =>
-  `${firstName[0]}${lastName?.[0] || ""}`.toUpperCase();
+  `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() || "?";
 
 export const slugify = (text: string) =>
   text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
