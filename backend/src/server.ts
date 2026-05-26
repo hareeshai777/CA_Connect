@@ -39,18 +39,27 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
-const allowedOrigins = new Set([
-  "http://localhost:3000",
-  "http://localhost:3001",
-  env.FRONTEND_URL,
-  ...(process.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? []),
-]);
+// Strip trailing slash so "https://foo.vercel.app/" matches "https://foo.vercel.app"
+const normalizeOrigin = (o: string) => o.replace(/\/$/, "");
+
+const corsOriginEnv = (process.env.CORS_ORIGIN || "").trim();
+const allowAllOrigins = corsOriginEnv === "*";
+
+const allowedOrigins = new Set(
+  [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    env.FRONTEND_URL,
+    ...(process.env.ALLOWED_ORIGINS?.split(",") ?? []),
+  ]
+    .map((o) => normalizeOrigin(o.trim()))
+    .filter(Boolean)
+);
 
 const isAllowedOrigin = (origin: string): boolean => {
-  if (allowedOrigins.has(origin)) return true;
-  // Allow any Vercel deployment (preview + production)
+  if (allowAllOrigins) return true;
+  if (allowedOrigins.has(normalizeOrigin(origin))) return true;
   if (/^https:\/\/.*\.vercel\.app$/.test(origin)) return true;
-  // Allow any Netlify deployment
   if (/^https:\/\/.*\.netlify\.app$/.test(origin)) return true;
   return false;
 };
