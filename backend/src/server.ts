@@ -1,5 +1,13 @@
 import "dotenv/config";
 import express from "express";
+
+// Prevent unhandled async errors from crashing the process
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err.message);
+});
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";

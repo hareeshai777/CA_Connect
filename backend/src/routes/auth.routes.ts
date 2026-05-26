@@ -1,3 +1,4 @@
+import { asyncHandler } from "../utils/asyncHandler";
 import { Router } from "express";
 import { body } from "express-validator";
 import * as authController from "../controllers/auth.controller";
@@ -19,7 +20,7 @@ router.post(
     body("role").optional().isIn(["CLIENT", "CA_PROFESSIONAL"]),
   ],
   validate,
-  authController.register
+  asyncHandler(authController.register)
 );
 
 router.post("/verify-otp", otpLimiter, [
@@ -34,21 +35,21 @@ router.post(
   authLimiter,
   [body("email").isEmail(), body("password").notEmpty()],
   validate,
-  authController.login
+  asyncHandler(authController.login)
 );
 
 router.post(
   "/google",
   [body("credential").notEmpty()],
   validate,
-  authController.googleSignIn
+  asyncHandler(authController.googleSignIn)
 );
 
 router.post(
   "/refresh",
   [body("refreshToken").notEmpty()],
   validate,
-  authController.refreshToken
+  asyncHandler(authController.refreshToken)
 );
 
 router.post("/logout", authenticate, authController.logout);
@@ -58,7 +59,7 @@ router.post(
   authLimiter,
   [body("email").isEmail()],
   validate,
-  authController.forgotPassword
+  asyncHandler(authController.forgotPassword)
 );
 
 router.post(
@@ -69,7 +70,7 @@ router.post(
     body("newPassword").isLength({ min: 8 }),
   ],
   validate,
-  authController.resetPassword
+  asyncHandler(authController.resetPassword)
 );
 
 router.put(
@@ -80,7 +81,7 @@ router.put(
     body("newPassword").isLength({ min: 8 }).withMessage("New password must be at least 8 characters"),
   ],
   validate,
-  authController.changePassword
+  asyncHandler(authController.changePassword)
 );
 
 router.get("/me", authenticate, authController.getMe);

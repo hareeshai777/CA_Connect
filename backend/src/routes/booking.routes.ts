@@ -1,3 +1,4 @@
+import { asyncHandler } from "../utils/asyncHandler";
 import { Router } from "express";
 import { body } from "express-validator";
 import * as bookingController from "../controllers/booking.controller";
@@ -16,7 +17,7 @@ router.post(
     body("slotId").notEmpty(),
   ],
   validate,
-  bookingController.createBookingOrder
+  asyncHandler(bookingController.createBookingOrder)
 );
 
 router.post(
@@ -32,7 +33,7 @@ router.post(
     body("slotId").notEmpty(),
   ],
   validate,
-  bookingController.confirmBooking
+  asyncHandler(bookingController.confirmBooking)
 );
 
 // Direct booking (no Razorpay — for demo/dev)
@@ -42,7 +43,7 @@ router.post(
   authorize("CLIENT"),
   [body("caId").notEmpty(), body("serviceId").notEmpty(), body("slotId").notEmpty()],
   validate,
-  bookingController.directBook
+  asyncHandler(bookingController.directBook)
 );
 
 router.get("/my", authenticate, bookingController.getClientBookings);
@@ -52,7 +53,7 @@ router.put(
   "/:id/cancel",
   authenticate,
   [body("reason").optional().isString()],
-  bookingController.cancelBooking
+  asyncHandler(bookingController.cancelBooking)
 );
 
 router.post(
@@ -65,7 +66,7 @@ router.post(
     body("comment").optional().isString(),
   ],
   validate,
-  bookingController.submitReview
+  asyncHandler(bookingController.submitReview)
 );
 
 export default router;

@@ -1,3 +1,4 @@
+import { asyncHandler } from "../utils/asyncHandler";
 import { Router } from "express";
 import { body } from "express-validator";
 import * as serviceController from "../controllers/service.controller";
@@ -20,7 +21,7 @@ router.post(
     body("category").notEmpty(),
   ],
   validate,
-  serviceController.createService
+  asyncHandler(serviceController.createService)
 );
 
 router.put("/:id", authenticate, authorize("SUPER_ADMIN"), serviceController.updateService);

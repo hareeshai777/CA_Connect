@@ -1,3 +1,4 @@
+import { asyncHandler } from "../utils/asyncHandler";
 import { Router } from "express";
 import { body } from "express-validator";
 import * as aiController from "../controllers/ai.controller";
@@ -15,14 +16,14 @@ router.post(
   "/recommend-ca",
   [body("needs").trim().notEmpty()],
   validate,
-  aiController.getCARecommendations
+  asyncHandler(aiController.getCARecommendations)
 );
 
 router.post(
   "/analyze-document",
   [body("documentContent").notEmpty()],
   validate,
-  aiController.analyzeDocument
+  asyncHandler(aiController.analyzeDocument)
 );
 
 router.post("/compliance", aiController.getComplianceSuggestions);

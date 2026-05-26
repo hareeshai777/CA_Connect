@@ -1,3 +1,4 @@
+import { asyncHandler } from "../utils/asyncHandler";
 import { Router } from "express";
 import { body } from "express-validator";
 import * as caController from "../controllers/ca.controller";
@@ -20,7 +21,7 @@ router.post(
     body("experienceYears").isInt({ min: 0 }),
   ],
   validate,
-  caController.registerCA
+  asyncHandler(caController.registerCA)
 );
 
 router.put("/profile", authenticate, authorize("CA_PROFESSIONAL"), caController.updateCAProfile);
@@ -46,7 +47,7 @@ router.post(
   authenticate,
   authorize("CA_PROFESSIONAL"),
   upload.array("documents", 5),
-  caController.uploadCADocuments
+  asyncHandler(caController.uploadCADocuments)
 );
 
 router.post(
@@ -54,7 +55,7 @@ router.post(
   authenticate,
   authorize("CA_PROFESSIONAL"),
   upload.single("avatar"),
-  caController.uploadAvatar
+  asyncHandler(caController.uploadAvatar)
 );
 
 router.post(
@@ -63,7 +64,7 @@ router.post(
   authorize("CA_PROFESSIONAL"),
   [body("slots").isArray({ min: 1 })],
   validate,
-  caController.manageTimeSlots
+  asyncHandler(caController.manageTimeSlots)
 );
 
 router.delete("/slots/:id", authenticate, authorize("CA_PROFESSIONAL"), caController.deleteTimeSlot);

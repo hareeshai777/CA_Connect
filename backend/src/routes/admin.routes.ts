@@ -1,3 +1,4 @@
+import { asyncHandler } from "../utils/asyncHandler";
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import * as adminController from "../controllers/admin.controller";
