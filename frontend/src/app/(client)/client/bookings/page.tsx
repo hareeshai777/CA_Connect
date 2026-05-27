@@ -33,6 +33,12 @@ export default function ClientBookingsPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [rescheduleId, setRescheduleId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<any[]>([]);
+  const [rescheduleSlotId, setRescheduleSlotId] = useState("");
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -55,6 +61,39 @@ export default function ClientBookingsPage() {
       setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, clientJoinedAt: new Date().toISOString() } : b));
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setJoiningId(null); }
+  };
+
+  const openReschedule = (bookingId: string) => {
+    setRescheduleId(rescheduleId === bookingId ? null : bookingId);
+    setRescheduleDate("");
+    setRescheduleSlots([]);
+    setRescheduleSlotId("");
+  };
+
+  const fetchRescheduleSlots = async (caId: string, date: string) => {
+    if (!date) return;
+    setLoadingSlots(true);
+    try {
+      const res = await api.get(`/ca/${caId}/slots?date=${date}`);
+      setRescheduleSlots(res.data.data || []);
+      setRescheduleSlotId("");
+    } catch { setRescheduleSlots([]); }
+    finally { setLoadingSlots(false); }
+  };
+
+  const confirmReschedule = async (bookingId: string) => {
+    if (!rescheduleSlotId) { toast.error("Please select a time slot"); return; }
+    setRescheduling(true);
+    try {
+      await api.patch(`/bookings/${bookingId}/reschedule`, { slotId: rescheduleSlotId });
+      toast.success("Booking rescheduled successfully!");
+      setRescheduleId(null);
+      setRescheduleDate("");
+      setRescheduleSlots([]);
+      setRescheduleSlotId("");
+      fetchBookings();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setRescheduling(false); }
   };
 
   const submitReview = async (bookingId: string) => {
@@ -135,12 +174,52 @@ export default function ClientBookingsPage() {
                     {joiningId === b.id ? "Joining…" : "Join"}
                   </Button>
                 )}
+                {["CONFIRMED", "PENDING"].includes(b.status) && !isMeetingExpired(b.scheduledAt, b.duration) && (
+                  <Button size="sm" variant="outline" className="rounded-xl shrink-0 gap-1.5" onClick={() => openReschedule(b.id)}>
+                    <Calendar className="w-3.5 h-3.5" />Reschedule
+                  </Button>
+                )}
                 {b.status === "COMPLETED" && !b.review && (
                   <Button size="sm" variant="outline" className="rounded-xl shrink-0 gap-1.5" onClick={() => setReviewId(reviewId === b.id ? null : b.id)}>
                     <Star className="w-3.5 h-3.5 text-yellow-500" />Rate
                   </Button>
                 )}
               </div>
+
+              {rescheduleId === b.id && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-sm font-medium mb-3">Select a new date and time slot</p>
+                  <input
+                    type="date"
+                    value={rescheduleDate}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => { setRescheduleDate(e.target.value); fetchRescheduleSlots(b.caProfessionalId, e.target.value); }}
+                    className="border border-border rounded-xl px-3 py-2 text-sm mb-3 bg-background"
+                  />
+                  {loadingSlots && <p className="text-xs text-muted-foreground mb-3">Loading available slots…</p>}
+                  {!loadingSlots && rescheduleDate && rescheduleSlots.length === 0 && (
+                    <p className="text-xs text-muted-foreground mb-3">No slots available for this date.</p>
+                  )}
+                  {rescheduleSlots.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {rescheduleSlots.map((slot: any) => (
+                        <button key={slot.id} onClick={() => setRescheduleSlotId(slot.id)}
+                          className={`px-3 py-1.5 text-xs rounded-xl border transition-colors ${rescheduleSlotId === slot.id ? "bg-brand-600 text-white border-brand-600" : "border-border text-muted-foreground hover:border-brand-300"}`}>
+                          {slot.startTime} – {slot.endTime}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700"
+                      disabled={!rescheduleSlotId || rescheduling}
+                      onClick={() => confirmReschedule(b.id)}>
+                      {rescheduling ? "Rescheduling…" : "Confirm Reschedule"}
+                    </Button>
+                    <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => openReschedule(b.id)}>Cancel</Button>
+                  </div>
+                </div>
+              )}
 
               {reviewId === b.id && (
                 <div className="mt-4 pt-4 border-t border-border">

@@ -74,6 +74,44 @@ router.post("/:id/join", authenticate, authorize("CLIENT"), asyncHandler(async (
   return sendSuccess(res, "Join recorded", { meetingLink: booking.meetingLink });
 }));
 
+router.patch("/:id/reschedule", authenticate, authorize("CLIENT"), asyncHandler(async (req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const userId = req.user!.userId;
+  const { slotId } = req.body;
+
+  if (!slotId) return sendError(res, "New slot ID is required", 400);
+
+  const client = await prisma.clientProfile.findUnique({ where: { userId } });
+  if (!client) return sendError(res, "Client profile not found", 404);
+
+  const booking = await prisma.booking.findFirst({
+    where: { id: req.params.id, clientProfileId: client.id },
+  });
+  if (!booking) return sendError(res, "Booking not found", 404);
+  if (!["CONFIRMED", "PENDING"].includes(booking.status))
+    return sendError(res, "Only confirmed or pending bookings can be rescheduled", 400);
+
+  const newSlot = await prisma.timeSlot.findUnique({ where: { id: slotId } });
+  if (!newSlot || newSlot.isBooked || newSlot.isBlocked)
+    return sendError(res, "Selected slot is not available", 400);
+  if (newSlot.caProfessionalId !== booking.caProfessionalId)
+    return sendError(res, "Slot does not belong to the same CA", 400);
+
+  const scheduledAt = new Date(`${newSlot.date.toISOString().split("T")[0]}T${newSlot.startTime}`);
+
+  const updated = await prisma.$transaction(async (tx) => {
+    await tx.timeSlot.update({ where: { id: booking.timeSlotId }, data: { isBooked: false } });
+    await tx.timeSlot.update({ where: { id: slotId }, data: { isBooked: true } });
+    return tx.booking.update({
+      where: { id: booking.id },
+      data: { timeSlotId: slotId, scheduledAt, clientJoinedAt: null },
+    });
+  });
+
+  return sendSuccess(res, "Booking rescheduled successfully", updated);
+}));
+
 router.put(
   "/:id/cancel",
   authenticate,
