@@ -67,7 +67,7 @@ router.post(
   asyncHandler(caController.manageTimeSlots)
 );
 
-router.delete("/slots/:id", authenticate, authorize("CA_PROFESSIONAL"), caController.deleteTimeSlot);
+router.delete("/slots/:id", authenticate, authorize("CA_PROFESSIONAL"), asyncHandler(caController.deleteTimeSlot));
 
 // ── Task Assignment (CA → Assistance Team) ──────────────────────────────────
 

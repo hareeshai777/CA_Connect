@@ -24,15 +24,15 @@ const navItems = [
 ];
 
 export default function CALayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, logout, fetchMe } = useAuthStore();
+  const { user, accessToken, isAuthenticated, logout, fetchMe } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isAuthenticated) { router.push("/auth/login"); return; }
-    if (!user) fetchMe();
-    else if (user.role !== "CA_PROFESSIONAL") router.push("/client/dashboard");
-  }, [isAuthenticated, user]);
+    if (!accessToken) { router.push("/auth/login"); return; }
+    if (!user || !isAuthenticated) { fetchMe(); return; }
+    if (user.role !== "CA_PROFESSIONAL") { router.push("/auth/login"); return; }
+  }, [accessToken, isAuthenticated, user]);
 
   const handleLogout = async () => {
     try { await api.post("/auth/logout"); } catch {}

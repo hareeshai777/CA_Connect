@@ -20,15 +20,15 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, logout, fetchMe } = useAuthStore();
+  const { user, accessToken, isAuthenticated, logout, fetchMe } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isAuthenticated) { router.push("/auth/login"); return; }
-    if (!user) fetchMe();
-    else if (user.role !== "SUPER_ADMIN") router.push("/client/dashboard");
-  }, [isAuthenticated, user]);
+    if (!accessToken) { router.push("/auth/login"); return; }
+    if (!user || !isAuthenticated) { fetchMe(); return; }
+    if (user.role !== "SUPER_ADMIN") { router.push("/auth/login"); return; }
+  }, [accessToken, isAuthenticated, user]);
 
   const handleLogout = async () => {
     try { await api.post("/auth/logout"); } catch {}
