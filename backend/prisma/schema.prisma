@@ -333,8 +333,9 @@ model Booking {
   timeSlot             TimeSlot        @relation(fields: [timeSlotId], references: [id])
   status               BookingStatus   @default(PENDING)
   scheduledAt          DateTime
-  duration             Int             @default(60)
+  duration             Int             @default(45)
   meetingLink          String?
+  meetingCode          String?
   googleEventId        String?
   googleMeetLink       String?
   calendarEventUrl     String?

@@ -35,7 +35,7 @@ export interface CalendarEventData {
 export const googleCalendarService = {
   createEvent: async (
     data: CalendarEventData
-  ): Promise<{ eventId: string; meetLink: string; eventUrl: string }> => {
+  ): Promise<{ eventId: string; meetLink: string; eventUrl: string; meetingCode: string }> => {
     try {
       const auth = getAuth();
       const calendar = google.calendar({ version: "v3", auth });
@@ -80,10 +80,13 @@ export const googleCalendarService = {
           (ep) => ep.entryPointType === "video"
         )?.uri || "";
 
+      const meetingCode = event.data.conferenceData?.conferenceId || "";
+
       return {
         eventId: event.data.id || "",
         meetLink,
         eventUrl: event.data.htmlLink || "",
+        meetingCode,
       };
     } catch (err) {
       logger.error("Google Calendar event creation failed", err);

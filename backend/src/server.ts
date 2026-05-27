@@ -31,6 +31,7 @@ import caseRoutes from "./routes/case.routes";
 import clientRoutes from "./routes/client.routes";
 
 import { startNotificationCron } from "./services/notification.service";
+import { startMeetingMonitor } from "./jobs/meetingMonitor";
 
 const app = express();
 
@@ -115,6 +116,7 @@ const PORT = env.PORT;
 app.listen(PORT, () => {
   logger.info(`🚀 Server running on port ${PORT} [${env.NODE_ENV}]`);
   startNotificationCron();
+  startMeetingMonitor();
 });
 
 export default app;

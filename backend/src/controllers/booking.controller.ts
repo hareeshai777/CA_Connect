@@ -110,9 +110,8 @@ export const confirmBooking = async (req: Request, res: Response) => {
   if (slot.isBooked) return sendError(res, "Slot already booked", 409);
 
   const scheduledAt = new Date(`${slot.date.toISOString().split("T")[0]}T${slot.startTime}`);
-  const [endHour, endMin] = slot.endTime.split(":").map(Number);
   const endDateTime = new Date(scheduledAt);
-  endDateTime.setHours(endHour, endMin);
+  endDateTime.setMinutes(endDateTime.getMinutes() + 45);
 
   const bookingNumber = generateBookingNumber();
   const platformFee = Math.round((ca.consultationFee * env.PLATFORM_COMMISSION_PERCENT) / 100);
@@ -241,9 +240,8 @@ export const directBook = async (req: Request, res: Response) => {
   if (!slot || slot.isBooked || slot.isBlocked) return sendError(res, "Time slot not available", 400);
 
   const scheduledAt = new Date(`${slot.date.toISOString().split("T")[0]}T${slot.startTime}`);
-  const [endHour, endMin] = slot.endTime.split(":").map(Number);
   const endDateTime = new Date(scheduledAt);
-  endDateTime.setHours(endHour, endMin);
+  endDateTime.setMinutes(endDateTime.getMinutes() + 45);
 
   const bookingNumber = generateBookingNumber();
   const platformFee = Math.round((ca.consultationFee * env.PLATFORM_COMMISSION_PERCENT) / 100);
@@ -251,6 +249,7 @@ export const directBook = async (req: Request, res: Response) => {
   const clientUser = await prisma.user.findUnique({ where: { id: userId } });
 
   let googleMeetLink = `https://meet.google.com/new`;
+  let meetingCode = "";
   try {
     const calEvent = await googleCalendarService.createEvent({
       summary: `CA Consultation: ${service.name}`,
@@ -263,6 +262,7 @@ export const directBook = async (req: Request, res: Response) => {
       ],
     });
     googleMeetLink = calEvent.meetLink || googleMeetLink;
+    meetingCode = calEvent.meetingCode || "";
   } catch {}
 
   const orderId = generateOrderId();
@@ -292,8 +292,10 @@ export const directBook = async (req: Request, res: Response) => {
         timeSlotId: slotId,
         status: "CONFIRMED",
         scheduledAt,
+        duration: 45,
         meetingLink: googleMeetLink,
         googleMeetLink,
+        meetingCode,
         notes,
         amount: ca.consultationFee,
         platformFee,

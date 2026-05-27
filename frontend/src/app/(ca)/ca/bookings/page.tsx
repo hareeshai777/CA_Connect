@@ -16,7 +16,7 @@ const statusVariant: Record<string, any> = {
   CONFIRMED: "success", COMPLETED: "info", CANCELLED: "destructive", PENDING: "warning",
 };
 
-const isMeetingExpired = (scheduledAt: string, duration = 60) => {
+const isMeetingExpired = (scheduledAt: string, duration = 45) => {
   if (!scheduledAt) return true;
   const end = new Date(scheduledAt);
   end.setMinutes(end.getMinutes() + duration);
