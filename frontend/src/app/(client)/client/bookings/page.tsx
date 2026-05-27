@@ -15,6 +15,13 @@ import Link from "next/link";
 const STATUS_TABS = ["ALL", "CONFIRMED", "COMPLETED", "CANCELLED", "PENDING"];
 const statusVariant: Record<string, any> = { CONFIRMED: "success", COMPLETED: "info", CANCELLED: "destructive", PENDING: "warning" };
 
+const isMeetingExpired = (scheduledAt: string, duration = 60) => {
+  if (!scheduledAt) return true;
+  const end = new Date(scheduledAt);
+  end.setMinutes(end.getMinutes() + duration);
+  return Date.now() > end.getTime();
+};
+
 export default function ClientBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +112,7 @@ export default function ClientBookingsPage() {
                   <Badge variant={statusVariant[b.status]} className="text-xs">{b.status}</Badge>
                   <p className="text-sm font-semibold text-brand-600">{formatCurrency(b.amount)}</p>
                 </div>
-                {b.status === "CONFIRMED" && b.meetingLink && (
+                {b.status === "CONFIRMED" && b.meetingLink && !isMeetingExpired(b.scheduledAt, b.duration) && (
                   <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700 shrink-0" asChild>
                     <a href={b.meetingLink} target="_blank" rel="noopener noreferrer"><Video className="mr-1.5 h-3.5 w-3.5" />Join</a>
                   </Button>
