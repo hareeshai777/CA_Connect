@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import axios from "axios";
 import { env } from "../config/env";
 import { logger } from "../utils/logger";
 
@@ -27,13 +28,11 @@ export const googleMeetService = {
   lookupSpace: async (meetingCode: string): Promise<string | null> => {
     try {
       const token = await getMeetToken();
-      const res = await fetch(
+      const res = await axios.get(
         `https://meet.googleapis.com/v2/spaces:lookup?meetingCode=${meetingCode}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!res.ok) return null;
-      const data = await res.json() as any;
-      return data.name || null; // e.g. "spaces/jQCFfuBOdN5z"
+      return res.data?.name || null; // e.g. "spaces/jQCFfuBOdN5z"
     } catch (err) {
       logger.error("Meet space lookup failed", err);
       return null;
@@ -48,21 +47,14 @@ export const googleMeetService = {
       const name = spaceNameOrCode.startsWith("spaces/")
         ? spaceNameOrCode
         : `spaces/${spaceNameOrCode}`;
-      const res = await fetch(
+      await axios.post(
         `https://meet.googleapis.com/v2/${name}:endActiveConference`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: "{}",
-        }
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!res.ok) {
-        logger.error("Meet endConference failed", { status: res.status, space: name });
-        return false;
-      }
       return true;
-    } catch (err) {
-      logger.error("Meet endConference error", err);
+    } catch (err: any) {
+      logger.error("Meet endConference error", { status: err?.response?.status, space: spaceNameOrCode });
       return false;
     }
   },
