@@ -1,25 +1,19 @@
-import { google } from "googleapis";
+import { JWT } from "google-auth-library";
 import axios from "axios";
 import { env } from "../config/env";
 import { logger } from "../utils/logger";
 
 const getMeetToken = async (): Promise<string> => {
-  const authConfig: any = {
-    credentials: {
-      client_email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: env.GOOGLE_PRIVATE_KEY,
-    },
+  const client = new JWT({
+    email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: env.GOOGLE_PRIVATE_KEY,
     scopes: [
       "https://www.googleapis.com/auth/meetings.space.created",
       "https://www.googleapis.com/auth/meetings.space.readonly",
     ],
-  };
-  if (env.GOOGLE_WORKSPACE_ADMIN_EMAIL) {
-    authConfig.clientOptions = { subject: env.GOOGLE_WORKSPACE_ADMIN_EMAIL };
-  }
-  const auth = new google.auth.GoogleAuth(authConfig);
-  const client = await auth.getClient();
-  const tokenRes = await (client as any).getAccessToken();
+    subject: env.GOOGLE_WORKSPACE_ADMIN_EMAIL || undefined,
+  });
+  const tokenRes = await client.getAccessToken();
   return tokenRes.token || "";
 };
 
