@@ -305,10 +305,16 @@ export const getCATimeSlots = async (req: Request, res: Response) => {
     caProfessionalId: id,
     isBooked: false,
     isBlocked: false,
-    date: date
-      ? new Date(date)
-      : { gte: new Date() },
   };
+
+  if (date) {
+    const d = new Date(date);
+    const nextDay = new Date(d);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+    where.date = { gte: d, lt: nextDay };
+  } else {
+    where.date = { gte: new Date() };
+  }
 
   const slots = await prisma.timeSlot.findMany({
     where,
