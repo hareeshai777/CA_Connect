@@ -3,7 +3,7 @@ import { env } from "../config/env";
 import { logger } from "../utils/logger";
 
 const getAuth = () => {
-  const auth = new google.auth.GoogleAuth({
+  const authConfig: any = {
     credentials: {
       client_email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: env.GOOGLE_PRIVATE_KEY,
@@ -12,8 +12,15 @@ const getAuth = () => {
       "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/calendar.events",
     ],
-  });
-  return auth;
+  };
+
+  // If a Workspace admin email is set, impersonate them for premium Meet features
+  // (requires domain-wide delegation enabled in Google Workspace Admin Console)
+  if (env.GOOGLE_WORKSPACE_ADMIN_EMAIL) {
+    authConfig.clientOptions = { subject: env.GOOGLE_WORKSPACE_ADMIN_EMAIL };
+  }
+
+  return new google.auth.GoogleAuth(authConfig);
 };
 
 export interface CalendarEventData {
@@ -49,6 +56,9 @@ export const googleCalendarService = {
             timeZone: data.timeZone || "Asia/Kolkata",
           },
           attendees: data.attendees,
+          guestsCanInviteOthers: false,
+          guestsCanModify: false,
+          guestsCanSeeOtherGuests: false,
           conferenceData: {
             createRequest: {
               requestId: `casaas-${Date.now()}`,

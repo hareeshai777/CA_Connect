@@ -32,6 +32,7 @@ export default function ClientBookingsPage() {
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -44,6 +45,17 @@ export default function ClientBookingsPage() {
   };
 
   useEffect(() => { fetchBookings(); }, [page, status]);
+
+  const handleJoin = async (bookingId: string) => {
+    setJoiningId(bookingId);
+    try {
+      const res = await api.post(`/bookings/${bookingId}/join`);
+      const link = res.data.data?.meetingLink;
+      if (link) window.open(link, "_blank", "noopener,noreferrer");
+      setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, clientJoinedAt: new Date().toISOString() } : b));
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setJoiningId(null); }
+  };
 
   const submitReview = async (bookingId: string) => {
     try {
@@ -112,9 +124,15 @@ export default function ClientBookingsPage() {
                   <Badge variant={statusVariant[b.status]} className="text-xs">{b.status}</Badge>
                   <p className="text-sm font-semibold text-brand-600">{formatCurrency(b.amount)}</p>
                 </div>
-                {b.status === "CONFIRMED" && b.meetingLink && !isMeetingExpired(b.scheduledAt, b.duration) && (
-                  <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700 shrink-0" asChild>
-                    <a href={b.meetingLink} target="_blank" rel="noopener noreferrer"><Video className="mr-1.5 h-3.5 w-3.5" />Join</a>
+                {b.status === "CONFIRMED" && b.meetingLink && !b.clientJoinedAt && !isMeetingExpired(b.scheduledAt, b.duration) && (
+                  <Button
+                    size="sm"
+                    className="rounded-xl bg-brand-600 hover:bg-brand-700 shrink-0"
+                    disabled={joiningId === b.id}
+                    onClick={() => handleJoin(b.id)}
+                  >
+                    <Video className="mr-1.5 h-3.5 w-3.5" />
+                    {joiningId === b.id ? "Joining…" : "Join"}
                   </Button>
                 )}
                 {b.status === "COMPLETED" && !b.review && (

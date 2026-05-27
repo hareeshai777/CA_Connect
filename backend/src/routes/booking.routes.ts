@@ -49,6 +49,31 @@ router.post(
 router.get("/my", authenticate, bookingController.getClientBookings);
 router.get("/ca", authenticate, authorize("CA_PROFESSIONAL"), bookingController.getCABookings);
 
+// Client joins meeting — records timestamp, hides link on re-load
+router.post("/:id/join", authenticate, authorize("CLIENT"), asyncHandler(async (req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const userId = req.user!.userId;
+
+  const client = await prisma.clientProfile.findUnique({ where: { userId } });
+  if (!client) return sendError(res, "Client profile not found", 404);
+
+  const booking = await prisma.booking.findFirst({
+    where: { id: req.params.id, clientProfileId: client.id },
+  });
+  if (!booking) return sendError(res, "Booking not found", 404);
+  if (!booking.meetingLink) return sendError(res, "No meeting link available", 400);
+
+  if (!booking.clientJoinedAt) {
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { clientJoinedAt: new Date() },
+    });
+  }
+
+  return sendSuccess(res, "Join recorded", { meetingLink: booking.meetingLink });
+}));
+
 router.put(
   "/:id/cancel",
   authenticate,

@@ -345,6 +345,7 @@ model Booking {
   caEarning            Int             @default(0)
   reminderSent15       Boolean         @default(false)
   reminderSent60       Boolean         @default(false)
+  clientJoinedAt       DateTime?
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 
