@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, Search, Video, Star, RefreshCw, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Search, Video, RefreshCw, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { api } from "@/lib/api";
 import { formatCurrency, formatDateTime, getInitials } from "@/lib/utils";
-import { toast } from "sonner";
 
 const STATUS_TABS = ["ALL", "CONFIRMED", "COMPLETED", "CANCELLED", "PENDING"];
 
@@ -100,7 +99,7 @@ export default function CABookingsPage() {
               </div>
               <div className="flex flex-col items-start sm:items-end gap-2">
                 <Badge variant={statusVariant[b.status]} className="text-xs">{b.status}</Badge>
-                <p className="text-sm font-semibold text-brand-600">{formatCurrency(b.totalAmount)}</p>
+                <p className="text-sm font-semibold text-brand-600">{formatCurrency(b.amount)}</p>
               </div>
               {b.status === "CONFIRMED" && b.meetingLink && (
                 <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700 shrink-0" asChild>

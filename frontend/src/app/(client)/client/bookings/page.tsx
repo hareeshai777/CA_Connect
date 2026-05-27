@@ -103,7 +103,7 @@ export default function ClientBookingsPage() {
                 </div>
                 <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
                   <Badge variant={statusVariant[b.status]} className="text-xs">{b.status}</Badge>
-                  <p className="text-sm font-semibold text-brand-600">{formatCurrency(b.totalAmount)}</p>
+                  <p className="text-sm font-semibold text-brand-600">{formatCurrency(b.amount)}</p>
                 </div>
                 {b.status === "CONFIRMED" && b.meetingLink && (
                   <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700 shrink-0" asChild>

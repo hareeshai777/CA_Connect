@@ -47,7 +47,7 @@ router.post(
 );
 
 router.get("/my", authenticate, bookingController.getClientBookings);
-router.get("/ca/bookings", authenticate, authorize("CA_PROFESSIONAL"), bookingController.getCABookings);
+router.get("/ca", authenticate, authorize("CA_PROFESSIONAL"), bookingController.getCABookings);
 
 router.put(
   "/:id/cancel",
@@ -67,6 +67,19 @@ router.post(
   ],
   validate,
   asyncHandler(bookingController.submitReview)
+);
+
+// Allow POST /bookings/:id/review (bookingId from URL param)
+router.post(
+  "/:id/review",
+  authenticate,
+  authorize("CLIENT"),
+  [body("rating").isInt({ min: 1, max: 5 }), body("comment").optional().isString()],
+  validate,
+  asyncHandler(async (req, res) => {
+    req.body.bookingId = req.params.id;
+    return bookingController.submitReview(req, res);
+  })
 );
 
 export default router;
