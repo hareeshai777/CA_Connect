@@ -130,7 +130,7 @@ export default function FindCAPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cas.map((ca, i) => <CACard key={ca.id} ca={ca} index={i} />)}
+                {cas.map((ca, i) => <CACard key={ca.id} ca={{ ...ca, _real: true }} index={i} />)}
               </div>
 
               {/* Pagination */}
