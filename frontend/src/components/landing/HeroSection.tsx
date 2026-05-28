@@ -4,8 +4,7 @@ import { motion, animate, useInView, useMotionValue } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight, Star, Users, CheckCircle, Award,
-  CalendarCheck, Shield, Lock, TrendingUp,
-  FileText, Building2, BarChart3,
+  CalendarCheck, Shield, Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useEffect, useState } from "react";
@@ -55,12 +54,6 @@ function RotatingWord() {
   );
 }
 
-const dashboardItems = [
-  { icon: CalendarCheck, label: "GST Return Filed", sub: "Today · ARN Generated", color: "from-emerald-500 to-teal-500", val: "✓" },
-  { icon: FileText, label: "ITR-3 Submitted", sub: "Refund ₹24,500 processed", color: "from-blue-500 to-indigo-500", val: "✓" },
-  { icon: Building2, label: "Company Registered", sub: "CIN issued in 9 days", color: "from-violet-500 to-purple-600", val: "✓" },
-  { icon: BarChart3, label: "Audit Completed", sub: "Form 3CD certified", color: "from-rose-500 to-pink-600", val: "✓" },
-];
 
 export function HeroSection() {
   return (
@@ -84,10 +77,10 @@ export function HeroSection() {
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-800/15 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-6 pt-32 pb-16">
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-8rem)]">
+        <div className="flex flex-col items-center min-h-[calc(100vh-8rem)] justify-center">
 
-          {/* ── Left Column ── */}
-          <div>
+          {/* ── Content ── */}
+          <div className="max-w-3xl text-center">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-semibold text-violet-300 mb-8 tracking-wider uppercase">
               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
@@ -136,84 +129,6 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* ── Right Column — Dashboard Card ── */}
-          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, delay: 0.3 }}
-            className="hidden lg:block">
-            <div className="relative">
-              {/* Glow behind card */}
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-600/30 to-indigo-600/20 rounded-3xl blur-3xl scale-110" />
-
-              {/* Main glass card */}
-              <div className="relative bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-                {/* Card header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Your CA Dashboard</p>
-                    <p className="text-lg font-bold text-white mt-0.5">Recent Activity</p>
-                  </div>
-                  <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl px-3 py-1.5 flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                    <span className="text-xs text-emerald-400 font-semibold">Live</span>
-                  </div>
-                </div>
-
-                {/* Activity items */}
-                <div className="space-y-3 mb-6">
-                  {dashboardItems.map((item, i) => (
-                    <motion.div key={item.label}
-                      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 + i * 0.12 }}
-                      className="flex items-center gap-3 bg-white/[0.04] border border-white/8 rounded-2xl p-3.5 hover:bg-white/[0.07] transition-colors group">
-                      <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0 shadow-lg`}>
-                        <item.icon className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{item.label}</p>
-                        <p className="text-[11px] text-slate-400 truncate">{item.sub}</p>
-                      </div>
-                      <div className="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Mini stats */}
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: "Tax Saved", val: "₹2.4L", color: "text-emerald-400" },
-                    { label: "On-time Rate", val: "99.2%", color: "text-blue-400" },
-                    { label: "CA Rating", val: "4.9★", color: "text-amber-400" },
-                  ].map((s) => (
-                    <div key={s.label} className="bg-white/[0.04] border border-white/8 rounded-xl p-3 text-center">
-                      <p className={`text-base font-bold ${s.color}`}>{s.val}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Floating CA profile chip */}
-                <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -top-5 -right-5 flex items-center gap-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl px-3 py-2 shadow-xl">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">PM</div>
-                  <div>
-                    <p className="text-xs font-semibold text-white">CA Priya Menon</p>
-                    <p className="text-[10px] text-slate-300">⭐ 4.9 · Available Now</p>
-                  </div>
-                </motion.div>
-
-                {/* Floating metric chip */}
-                <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  className="absolute -bottom-5 -left-5 flex items-center gap-2 bg-amber-500/20 backdrop-blur-lg border border-amber-500/30 rounded-2xl px-3 py-2 shadow-xl">
-                  <TrendingUp className="w-4 h-4 text-amber-400 shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold text-amber-300">₹85K Tax Saved</p>
-                    <p className="text-[10px] text-amber-400/70">This financial year</p>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
         </div>
 
         {/* ── Bottom Stats Bar ── */}
