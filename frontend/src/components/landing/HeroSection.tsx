@@ -5,7 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useRef, useMemo, useEffect, useState } from "react";
 import * as THREE from "three";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, TrendingUp, Shield, Award, Users, CheckCircle, Star } from "lucide-react";
+import { ArrowRight, CalendarCheck, Shield, Award, Users, CheckCircle, Star, Lock as LockIcon, FileText, Building2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // ─── Three.js Particle Field ──────────────────────────────────────────────────
@@ -108,6 +108,30 @@ function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: strin
   return <span ref={ref}>{display}</span>;
 }
 
+// ─── Rotating Word ───────────────────────────────────────────────────────────
+
+const rotatingWords = ["Tax Filing", "GST Compliance", "Registrations", "Audits", "Payroll"];
+
+function RotatingWord() {
+  const [idx, setIdx] = useState(0);
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const t = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => { setIdx((i) => (i + 1) % rotatingWords.length); setVisible(true); }, 350);
+    }, 2800);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <span
+      className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 transition-all duration-350"
+      style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(10px)" }}
+    >
+      {rotatingWords[idx]}
+    </span>
+  );
+}
+
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 const heroStats = [
@@ -119,8 +143,7 @@ const heroStats = [
 
 const trustBadges = [
   { icon: Shield, label: "ICAI Verified" },
-  { icon: TrendingUp, label: "Tax-Efficient" },
-  { icon: Award, label: "Top Rated" },
+  { icon: LockIcon, label: "100% Confidential" },
 ];
 
 export function HeroSection() {
@@ -159,33 +182,31 @@ export function HeroSection() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 bg-blue-500/15 border border-blue-500/30 rounded-full px-4 py-1.5 text-xs font-semibold text-blue-300 mb-7 tracking-widest uppercase backdrop-blur-sm">
               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
-              India&apos;s Premier CA Platform
+              India&apos;s Most Trusted CA Platform
             </motion.div>
 
             {/* Headline */}
             <motion.h1 initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, delay: 0.1 }}
-              className="text-5xl md:text-6xl xl:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-6">
-              Empowering Your
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 mt-1">
-                Financial Future
-              </span>
-              With Proven Strategies
+              className="text-5xl md:text-6xl xl:text-7xl font-extrabold text-white leading-[1.08] tracking-tight mb-6">
+              Expert CAs for
+              <RotatingWord />
+              <span className="block text-white/70 text-5xl md:text-6xl xl:text-7xl mt-1">& More</span>
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
               className="text-lg text-slate-300/80 leading-relaxed mb-9 max-w-2xl">
-              Connect with ICAI-verified Chartered Accountants for GST, income tax, company registration, audits, and wealth management.
-              Expert guidance starting at just <span className="text-blue-300 font-bold">₹499</span>.
+              Connect with ICAI-verified Chartered Accountants for all your business and personal finance needs.
+              Book a consultation for just <span className="text-amber-400 font-bold">₹499</span>.
             </motion.p>
 
             {/* CTAs */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 mb-10">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-                <Button size="xl" className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 px-8 rounded-xl text-base shadow-2xl shadow-blue-700/40 border-0" asChild>
+                <Button size="xl" className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-gray-900 font-extrabold h-14 px-8 rounded-xl text-base shadow-2xl shadow-amber-500/30 border-0" asChild>
                   <Link href="/services">
                     <CalendarCheck className="mr-2 w-5 h-5" />
-                    Get Started
+                    Book Consultation — ₹499
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Link>
                 </Button>
@@ -208,50 +229,86 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Right — 2 cols — Glass info card */}
+          {/* Right — Dashboard Activity Card */}
           <motion.div initial={{ opacity: 0, x: 40, scale: 0.95 }} animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.35 }}
-            className="lg:col-span-2 hidden lg:flex flex-col gap-4">
+            className="lg:col-span-2 hidden lg:block relative">
 
-            {/* Main glass card */}
-            <div className="bg-white/[0.05] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-              <p className="text-xs text-blue-300 font-semibold uppercase tracking-widest mb-4">Why Choose CAConnect</p>
-              {[
-                { pct: 98, label: "Client Satisfaction Rate", color: "from-blue-500 to-cyan-400" },
-                { pct: 95, label: "On-Time Filing Rate", color: "from-emerald-500 to-teal-400" },
-                { pct: 100, label: "ICAI-Verified Professionals", color: "from-violet-500 to-purple-400" },
-              ].map((item, i) => (
-                <motion.div key={item.label} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + i * 0.12 }} className="mb-4">
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-slate-300 font-medium">{item.label}</span>
-                    <span className="text-white font-bold">{item.pct}%</span>
+            {/* Glow behind */}
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-indigo-600/15 rounded-3xl blur-3xl scale-110 pointer-events-none" />
+
+            {/* Floating CA chip — top right */}
+            <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-4 -right-4 z-20 flex items-center gap-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl px-3 py-2 shadow-xl">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">PM</div>
+              <div>
+                <p className="text-xs font-semibold text-white leading-tight">CA Priya Menon</p>
+                <p className="text-[10px] text-slate-300">⭐ 4.9 · Available Now</p>
+              </div>
+            </motion.div>
+
+            {/* Main dashboard card */}
+            <div className="relative bg-white/[0.05] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">Your CA Dashboard</p>
+                  <p className="text-lg font-bold text-white mt-0.5">Recent Activity</p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-xl px-3 py-1.5">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-xs text-emerald-400 font-semibold">Live</span>
+                </div>
+              </div>
+
+              {/* Activity items */}
+              <div className="space-y-2.5 mb-5">
+                {[
+                  { icon: CalendarCheck, label: "GST Return Filed", sub: "Today · ARN Generated", color: "from-emerald-500 to-teal-500" },
+                  { icon: FileText, label: "ITR-3 Submitted", sub: "Refund ₹24,500 processed", color: "from-blue-500 to-indigo-500" },
+                  { icon: Building2, label: "Company Registered", sub: "CIN issued in 9 days", color: "from-violet-500 to-purple-600" },
+                  { icon: BarChart3, label: "Audit Completed", sub: "Form 3CD certified", color: "from-rose-500 to-pink-600" },
+                ].map((item, i) => (
+                  <motion.div key={item.label}
+                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.55 + i * 0.1 }}
+                    className="flex items-center gap-3 bg-white/[0.04] border border-white/8 rounded-2xl p-3 hover:bg-white/[0.07] transition-colors">
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0 shadow-lg`}>
+                      <item.icon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{item.label}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{item.sub}</p>
+                    </div>
+                    <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Mini stats */}
+              <div className="grid grid-cols-3 gap-2.5">
+                {[
+                  { label: "Tax Saved", val: "₹2.4L", color: "text-emerald-400" },
+                  { label: "On-time Rate", val: "99.2%", color: "text-blue-400" },
+                  { label: "CA Rating", val: "4.9★", color: "text-amber-400" },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white/[0.04] border border-white/8 rounded-xl p-3 text-center">
+                    <p className={`text-base font-bold ${s.color}`}>{s.val}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{s.label}</p>
                   </div>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${item.pct}%` }}
-                      transition={{ duration: 1.5, delay: 0.8 + i * 0.15, ease: "easeOut" }}
-                      className={`h-full bg-gradient-to-r ${item.color} rounded-full`} />
-                  </div>
-                </motion.div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            {/* Floating mini cards */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { val: "₹85K", label: "Avg Tax Saved", color: "text-emerald-400" },
-                { val: "2 min", label: "Booking Time", color: "text-blue-400" },
-                { val: "9 days", label: "Company Reg.", color: "text-violet-400" },
-                { val: "24/7", label: "CA Support", color: "text-amber-400" },
-              ].map((item, i) => (
-                <motion.div key={item.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 + i * 0.08 }}
-                  className="bg-white/[0.05] border border-white/10 rounded-2xl p-4 backdrop-blur-sm text-center hover:bg-white/10 transition-colors">
-                  <p className={`text-xl font-extrabold ${item.color}`}>{item.val}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{item.label}</p>
-                </motion.div>
-              ))}
-            </div>
+            {/* Floating tax chip — bottom left */}
+            <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -bottom-4 -left-4 z-20 flex items-center gap-2 bg-amber-500/20 backdrop-blur-lg border border-amber-500/30 rounded-2xl px-3 py-2 shadow-xl">
+              <Award className="w-4 h-4 text-amber-400 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-amber-300 leading-tight">₹85K Tax Saved</p>
+                <p className="text-[10px] text-amber-400/70">This financial year</p>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
 
