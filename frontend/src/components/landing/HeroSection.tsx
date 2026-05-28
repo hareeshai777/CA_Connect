@@ -4,8 +4,7 @@ import { motion, useScroll, useTransform, animate, useInView, useMotionValue } f
 import Link from "next/link";
 import {
   ArrowRight, Shield, Star, Users, CheckCircle,
-  Award, Zap, Building2,
-  IndianRupee, CalendarCheck, MessageSquare,
+  Award, Zap, CalendarCheck, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useEffect, useState } from "react";
@@ -24,35 +23,6 @@ const trustBadges = [
   { label: "100% Confidential", icon: Award },
 ];
 
-const floatingCards = [
-  {
-    title: "Company Registration",
-    subtitle: "Pvt Ltd incorporated",
-    value: "In 7 days",
-    icon: Building2,
-    color: "from-purple-500 to-purple-600",
-    position: "top-[20%] right-[3%]",
-    delay: 1.0,
-  },
-  {
-    title: "Consultation Booked",
-    subtitle: "CA Priya Sharma",
-    value: "Today 3:00 PM",
-    icon: CalendarCheck,
-    color: "from-green-500 to-green-600",
-    position: "bottom-[25%] left-[2%]",
-    delay: 1.2,
-  },
-  {
-    title: "₹499 Paid",
-    subtitle: "Razorpay · Secure",
-    value: "Instantly confirmed",
-    icon: IndianRupee,
-    color: "from-orange-500 to-orange-600",
-    position: "bottom-[28%] right-[2%]",
-    delay: 1.4,
-  },
-];
 
 function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: string; decimals?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -102,26 +72,6 @@ function RotatingWord() {
   );
 }
 
-const FloatingCard = ({ card }: { card: (typeof floatingCards)[0] }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30, scale: 0.9 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ duration: 0.6, delay: card.delay }}
-    whileHover={{ scale: 1.06, y: -4 }}
-    className={`absolute ${card.position} hidden lg:flex items-center gap-3 bg-white rounded-2xl p-3 shadow-2xl border border-border z-20 max-w-[200px] cursor-default`}
-    style={{ animation: `float 4s ease-in-out infinite ${card.delay}s` }}
-  >
-    <div className={`w-9 h-9 bg-gradient-to-br ${card.color} rounded-xl flex items-center justify-center shrink-0 shadow-lg`}>
-      <card.icon className="w-4 h-4 text-white" />
-    </div>
-    <div className="min-w-0">
-      <p className="font-semibold text-xs leading-tight truncate">{card.title}</p>
-      <p className="text-[10px] text-muted-foreground truncate">{card.subtitle}</p>
-      <p className={`text-[10px] font-bold bg-gradient-to-r ${card.color} bg-clip-text text-transparent`}>{card.value}</p>
-    </div>
-    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white animate-pulse" />
-  </motion.div>
-);
 
 export function HeroSection() {
   const containerRef = useRef<HTMLElement>(null);
@@ -154,11 +104,7 @@ export function HeroSection() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-indigo-300/10 rounded-full blur-[80px]" />
       </motion.div>
 
-      {floatingCards.map((card) => (
-        <FloatingCard key={card.title} card={card} />
-      ))}
-
-      <div className="container mx-auto px-4 py-24 relative z-10">
+<div className="container mx-auto px-4 py-24 relative z-10">
         <div className="max-w-5xl mx-auto text-center">
 
           <motion.div
