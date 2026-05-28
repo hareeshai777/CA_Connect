@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight, Shield, Star, Users, CheckCircle,
-  Award, Zap, Building2, FileText,
+  Award, Zap, Building2,
   IndianRupee, CalendarCheck, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,15 +25,6 @@ const trustBadges = [
 ];
 
 const floatingCards = [
-  {
-    title: "GST Filing",
-    subtitle: "Completed today",
-    value: "₹2,450 saved",
-    icon: FileText,
-    color: "from-blue-500 to-blue-600",
-    position: "top-[15%] left-[3%]",
-    delay: 0.8,
-  },
   {
     title: "Company Registration",
     subtitle: "Pvt Ltd incorporated",
