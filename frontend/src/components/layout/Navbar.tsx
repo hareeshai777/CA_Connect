@@ -6,8 +6,9 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, X, ChevronDown, User, LogOut,
-  LayoutDashboard, Bell, Settings, Briefcase,
+  LayoutDashboard, Bell, Settings,
 } from "lucide-react";
+import { CALogo } from "@/components/ui/CALogo";
 import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -69,14 +70,7 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center shadow-md">
-              <Briefcase className="w-5 h-5 text-white" />
-            </div>
-            <span className={cn("text-xl font-bold font-heading transition-colors", useLight ? "text-white" : "text-gray-900")}>
-              CA<span className={useLight ? "text-yellow-300" : "text-brand-600"}>Connect</span>
-            </span>
-          </Link>
+          <CALogo size={44} />
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">

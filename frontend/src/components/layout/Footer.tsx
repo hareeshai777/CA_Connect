@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Briefcase, Mail, Phone, MapPin, Twitter, Linkedin, Instagram, Facebook } from "lucide-react";
+import { Mail, Phone, MapPin, Twitter, Linkedin, Instagram, Facebook } from "lucide-react";
+import { CALogo } from "@/components/ui/CALogo";
 
 const footerLinks = {
   Services: [
@@ -38,14 +39,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white font-heading">
-                CA<span className="text-brand-400">Connect</span>
-              </span>
-            </Link>
+            <div className="mb-4">
+              <CALogo size={48} />
+            </div>
             <p className="text-sm text-gray-400 leading-relaxed mb-6 max-w-xs">
               India's most trusted platform connecting clients with verified Chartered Accountants for seamless financial and compliance services.
             </p>
