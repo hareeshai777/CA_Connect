@@ -79,6 +79,77 @@ export const emailTemplates = {
       </div>`,
   }),
 
+  rescheduleConfirmation: (data: {
+    clientName: string;
+    caName: string;
+    service: string;
+    newDate: string;
+    newTime: string;
+    meetLink: string;
+    bookingNumber: string;
+    rescheduledBy: "CLIENT" | "CA";
+  }) => ({
+    subject: `Meeting Rescheduled: ${data.bookingNumber} - CA SaaS`,
+    html: `
+      <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:40px 20px">
+        <div style="background:#fff;border-radius:12px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+          <div style="text-align:center;margin-bottom:32px">
+            <h1 style="color:#1e40af;font-size:28px;margin:0">CA<span style="color:#f59e0b">Pro</span></h1>
+          </div>
+          <div style="background:#fffbeb;border-radius:8px;padding:16px;margin-bottom:24px;border-left:4px solid #f59e0b">
+            <p style="color:#b45309;font-weight:600;margin:0">📅 Meeting Rescheduled</p>
+          </div>
+          <h2 style="color:#1e293b">Hi ${data.clientName},</h2>
+          <p style="color:#475569">Your consultation has been rescheduled by ${data.rescheduledBy === "CA" ? `CA ${data.caName}` : "you"}. Here are the updated details:</p>
+          <table style="width:100%;border-collapse:collapse;margin:24px 0">
+            <tr><td style="padding:12px;background:#f8fafc;color:#64748b;width:40%">Booking ID</td><td style="padding:12px;font-weight:600;color:#1e293b">${data.bookingNumber}</td></tr>
+            <tr><td style="padding:12px;color:#64748b">CA Professional</td><td style="padding:12px;font-weight:600;color:#1e293b">${data.caName}</td></tr>
+            <tr><td style="padding:12px;background:#f8fafc;color:#64748b">Service</td><td style="padding:12px;background:#f8fafc;font-weight:600;color:#1e293b">${data.service}</td></tr>
+            <tr><td style="padding:12px;color:#64748b">New Date</td><td style="padding:12px;font-weight:600;color:#059669">${data.newDate}</td></tr>
+            <tr><td style="padding:12px;background:#f8fafc;color:#64748b">New Time</td><td style="padding:12px;background:#f8fafc;font-weight:600;color:#059669">${data.newTime}</td></tr>
+          </table>
+          <a href="${data.meetLink}" style="display:block;background:#1e40af;color:#fff;text-align:center;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">Join Meeting</a>
+          <p style="color:#64748b;font-size:13px;margin-top:16px">Please add this to your calendar. The meeting link remains the same.</p>
+          <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:32px">© ${new Date().getFullYear()} CA SaaS Platform</p>
+        </div>
+      </div>`,
+  }),
+
+  meetingDetails: (data: {
+    clientName: string;
+    caName: string;
+    service: string;
+    date: string;
+    time: string;
+    meetLink: string;
+    bookingNumber: string;
+  }) => ({
+    subject: `Your Meeting Details: ${data.bookingNumber} - CA SaaS`,
+    html: `
+      <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:40px 20px">
+        <div style="background:#fff;border-radius:12px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+          <div style="text-align:center;margin-bottom:32px">
+            <h1 style="color:#1e40af;font-size:28px;margin:0">CA<span style="color:#f59e0b">Pro</span></h1>
+          </div>
+          <div style="background:#eff6ff;border-radius:8px;padding:16px;margin-bottom:24px;border-left:4px solid #3b82f6">
+            <p style="color:#1d4ed8;font-weight:600;margin:0">📋 Your Meeting Details</p>
+          </div>
+          <h2 style="color:#1e293b">Hi ${data.clientName},</h2>
+          <p style="color:#475569">Here are your upcoming consultation details with CA ${data.caName}:</p>
+          <table style="width:100%;border-collapse:collapse;margin:24px 0">
+            <tr><td style="padding:12px;background:#f8fafc;color:#64748b;width:40%">Booking ID</td><td style="padding:12px;font-weight:600;color:#1e293b">${data.bookingNumber}</td></tr>
+            <tr><td style="padding:12px;color:#64748b">CA Professional</td><td style="padding:12px;font-weight:600;color:#1e293b">${data.caName}</td></tr>
+            <tr><td style="padding:12px;background:#f8fafc;color:#64748b">Service</td><td style="padding:12px;background:#f8fafc;font-weight:600;color:#1e293b">${data.service}</td></tr>
+            <tr><td style="padding:12px;color:#64748b">Date</td><td style="padding:12px;font-weight:600;color:#1e293b">${data.date}</td></tr>
+            <tr><td style="padding:12px;background:#f8fafc;color:#64748b">Time</td><td style="padding:12px;background:#f8fafc;font-weight:600;color:#1e293b">${data.time}</td></tr>
+          </table>
+          <a href="${data.meetLink}" style="display:block;background:#1e40af;color:#fff;text-align:center;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">Join Meeting</a>
+          <p style="color:#64748b;font-size:13px;margin-top:16px">Join 5 minutes before the scheduled time. Keep this email handy.</p>
+          <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:32px">© ${new Date().getFullYear()} CA SaaS Platform</p>
+        </div>
+      </div>`,
+  }),
+
   caActivation: (data: { caName: string }) => ({
     subject: "Your CA Account is Active - CA SaaS",
     html: `

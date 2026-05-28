@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Calendar, Search, Video, RefreshCw, Clock, AlertCircle, CalendarClock, CheckCircle, X } from "lucide-react";
+import { Calendar, Search, Video, RefreshCw, Clock, AlertCircle, CalendarClock, CheckCircle, X, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,9 @@ export default function CABookingsPage() {
   const [total, setTotal] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Send meeting details state
+  const [sendingId, setSendingId] = useState<string | null>(null);
+
   // Reschedule state
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
@@ -70,6 +73,20 @@ export default function CABookingsPage() {
     fetchBookings();
     return () => abortRef.current?.abort();
   }, [page, status]);
+
+  const sendMeetingDetails = async (bookingId: string) => {
+    setSendingId(bookingId);
+    try {
+      const res = await api.post(`/bookings/${bookingId}/send-meeting-details`);
+      const { emailSent, whatsappSent } = res.data.data || {};
+      const channels = [emailSent && "Email", whatsappSent && "WhatsApp"].filter(Boolean).join(" & ");
+      toast.success(`Meeting details sent via ${channels || "notification"}!`);
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Failed to send meeting details");
+    } finally {
+      setSendingId(null);
+    }
+  };
 
   const openReschedule = (bookingId: string) => {
     setRescheduleId(rescheduleId === bookingId ? null : bookingId);
@@ -191,6 +208,22 @@ export default function CABookingsPage() {
                       <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
                         <Video className="mr-1.5 h-3.5 w-3.5" />Join Meet
                       </a>
+                    </Button>
+                  )}
+                  {/* Send Meeting Details */}
+                  {b.status === "CONFIRMED" && b.meetingLink && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl gap-1.5 text-xs"
+                      disabled={sendingId === b.id}
+                      onClick={() => sendMeetingDetails(b.id)}
+                      title="Send meeting link + time to client via Email & WhatsApp"
+                    >
+                      {sendingId === b.id
+                        ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" />Sending…</>
+                        : <><Send className="w-3.5 h-3.5" />Notify Client</>
+                      }
                     </Button>
                   )}
                   {/* Reschedule */}

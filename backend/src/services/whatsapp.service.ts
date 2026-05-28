@@ -94,6 +94,64 @@ export const whatsappService = {
     });
   },
 
+  sendRescheduleNotification: async (data: {
+    phone: string;
+    name: string;
+    caName: string;
+    service: string;
+    newDate: string;
+    newTime: string;
+    meetLink: string;
+    bookingNumber: string;
+    rescheduledBy: "CLIENT" | "CA";
+  }) => {
+    await sendWhatsApp(data.phone, {
+      type: "text",
+      text: {
+        body:
+          `📅 *Meeting Rescheduled*\n\n` +
+          `Hi ${data.name}, your consultation has been rescheduled` +
+          ` by ${data.rescheduledBy === "CA" ? `CA ${data.caName}` : "you"}.\n\n` +
+          `📋 *Booking ID:* ${data.bookingNumber}\n` +
+          `👨‍💼 *CA Professional:* ${data.caName}\n` +
+          `📁 *Service:* ${data.service}\n` +
+          `📅 *New Date:* ${data.newDate}\n` +
+          `⏰ *New Time:* ${data.newTime}\n\n` +
+          `🔗 *Meeting Link (unchanged):*\n${data.meetLink}\n\n` +
+          `_Please update your calendar accordingly._\n` +
+          `_CA SaaS Platform_`,
+      },
+    });
+  },
+
+  sendMeetingDetails: async (data: {
+    phone: string;
+    name: string;
+    caName: string;
+    service: string;
+    date: string;
+    time: string;
+    meetLink: string;
+    bookingNumber: string;
+  }) => {
+    await sendWhatsApp(data.phone, {
+      type: "text",
+      text: {
+        body:
+          `📋 *Your Meeting Details*\n\n` +
+          `Hi ${data.name}, here are your upcoming consultation details:\n\n` +
+          `📋 *Booking ID:* ${data.bookingNumber}\n` +
+          `👨‍💼 *CA Professional:* ${data.caName}\n` +
+          `📁 *Service:* ${data.service}\n` +
+          `📅 *Date:* ${data.date}\n` +
+          `⏰ *Time:* ${data.time}\n\n` +
+          `🔗 *Meeting Link:*\n${data.meetLink}\n\n` +
+          `_Join 5 minutes early. Keep this message handy._\n` +
+          `_CA SaaS Platform_`,
+      },
+    });
+  },
+
   sendCAActivation: async (data: { phone: string; caName: string }) => {
     await sendWhatsApp(data.phone, {
       type: "text",
