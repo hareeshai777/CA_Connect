@@ -311,18 +311,21 @@ function FAQItem({ q, a, index }: { q: string; a: string; index: number }) {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
+const TABS = ["Overview", "Documents", "Process", "FAQs", "Related Services"] as const;
+type Tab = (typeof TABS)[number];
+
 export default function ServiceDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const [service, setService] = useState<any>(STATIC_SERVICES[slug] || null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("Overview");
 
   const handleBook = () => {
     if (!isAuthenticated) {
       router.push(`/auth/login?redirect=/find-ca?service=${slug}`);
     } else if (user?.role === "CA_PROFESSIONAL" || user?.role === "SUPER_ADMIN") {
-      // CAs and admins should not book consultations
       return;
     } else {
       router.push(`/find-ca?service=${slug}`);
@@ -331,7 +334,11 @@ export default function ServiceDetailPage() {
 
   useEffect(() => {
     if (!slug) return;
-    api.get(`/services/${slug}`).then((r) => { if (r.data?.data) setService(r.data.data); }).catch(() => {});
+    // Merge API data ON TOP of static data so process/FAQs/docs are never lost
+    const staticData = STATIC_SERVICES[slug] || {};
+    api.get(`/services/${slug}`)
+      .then((r) => { if (r.data?.data) setService({ ...staticData, ...r.data.data }); })
+      .catch(() => {});
     api.get(`/ca?service=${slug}&limit=4`).catch(() => {}).finally(() => setLoading(false));
   }, [slug]);
 
@@ -403,25 +410,19 @@ export default function ServiceDetailPage() {
         <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-2">
-              {["Overview", "Documents", "Process", "FAQs", "Related Services"].map((tab) => {
-                const id = tab.toLowerCase().replace(/ /g, "-");
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      const el = document.getElementById(id);
-                      if (el) {
-                        const offset = 112; // navbar (64px) + service nav (~48px)
-                        const top = el.getBoundingClientRect().top + window.scrollY - offset;
-                        window.scrollTo({ top, behavior: "smooth" });
-                      }
-                    }}
-                    className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  >
-                    {tab}
-                  </button>
-                );
-              })}
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                    activeTab === tab
+                      ? "bg-brand-50 text-brand-700 border border-brand-200"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -430,108 +431,136 @@ export default function ServiceDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
             {/* ── Left Content ── */}
-            <div className="lg:col-span-2 space-y-12">
-
-              {/* Overview */}
-              <section id="overview" className="scroll-mt-32">
-                <h2 className="text-2xl font-bold font-heading mb-4">Service Overview</h2>
-                <p className="text-muted-foreground leading-relaxed mb-6">{service.description}</p>
-                {benefits.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {benefits.map((b, i) => (
-                      <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}
-                        className="flex items-start gap-3 p-4 bg-green-50 rounded-xl border border-green-100">
-                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                        <span className="text-sm font-medium">{b}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Required Documents */}
-              {service.requiredDocuments && (
-                <section id="documents" className="scroll-mt-32">
-                  <h2 className="text-2xl font-bold font-heading mb-4">Required Documents</h2>
-                  <p className="text-muted-foreground mb-5 text-sm">Upload these documents after booking your consultation.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {service.requiredDocuments.map((doc: string, i: number) => (
-                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}
-                        className="flex items-center gap-3 p-4 bg-white rounded-xl border border-border hover:border-brand-300 transition-colors">
-                        <div className="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-brand-600" />
+            <div className="lg:col-span-2">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {/* Overview */}
+                  {activeTab === "Overview" && (
+                    <section>
+                      <h2 className="text-2xl font-bold font-heading mb-4">Service Overview</h2>
+                      <p className="text-muted-foreground leading-relaxed mb-6">{service.description}</p>
+                      {benefits.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {benefits.map((b, i) => (
+                            <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+                              className="flex items-start gap-3 p-4 bg-green-50 rounded-xl border border-green-100">
+                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                              <span className="text-sm font-medium">{b}</span>
+                            </motion.div>
+                          ))}
                         </div>
-                        <span className="text-sm font-medium">{doc}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-yellow-800">
-                      Our Assistance Team will verify all documents before processing. Additional documents may be requested based on your specific case.
-                    </p>
-                  </div>
-                </section>
-              )}
+                      )}
+                    </section>
+                  )}
 
-              {/* Step-by-Step Process */}
-              {service.process && (
-                <section id="process" className="scroll-mt-32">
-                  <h2 className="text-2xl font-bold font-heading mb-6">How It Works</h2>
-                  <div className="space-y-0">
-                    {service.process.map((step: any, i: number) => (
-                      <motion.div key={step.step} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                        className="flex gap-5 group">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-sm shadow-lg shrink-0">
-                            {step.step}
+                  {/* Documents */}
+                  {activeTab === "Documents" && (
+                    <section>
+                      <h2 className="text-2xl font-bold font-heading mb-4">Required Documents</h2>
+                      <p className="text-muted-foreground mb-5 text-sm">Upload these documents after booking your consultation.</p>
+                      {service.requiredDocuments?.length > 0 ? (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                            {service.requiredDocuments.map((doc: string, i: number) => (
+                              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-border hover:border-brand-300 transition-colors">
+                                <div className="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center shrink-0">
+                                  <FileText className="w-4 h-4 text-brand-600" />
+                                </div>
+                                <span className="text-sm font-medium">{doc}</span>
+                              </motion.div>
+                            ))}
                           </div>
-                          {i < service.process.length - 1 && <div className="w-0.5 h-full bg-gradient-to-b from-brand-300 to-transparent min-h-[40px] mt-1" />}
-                        </div>
-                        <div className="pb-8 flex-1">
-                          <h3 className="font-bold text-base mb-1">{step.title}</h3>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-
-              {/* FAQs */}
-              {service.faqs && (
-                <section id="faqs" className="scroll-mt-32">
-                  <h2 className="text-2xl font-bold font-heading mb-5">Frequently Asked Questions</h2>
-                  <div className="space-y-3">
-                    {service.faqs.map((faq: any, i: number) => (
-                      <FAQItem key={i} q={faq.q} a={faq.a} index={i} />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Related Services */}
-              {service.relatedServices && (
-                <section id="related-services" className="scroll-mt-32">
-                  <h2 className="text-2xl font-bold font-heading mb-5">Related Services</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {service.relatedServices.map((relSlug: string) => {
-                      const rel = STATIC_SERVICES[relSlug];
-                      if (!rel) return null;
-                      return (
-                        <Link key={relSlug} href={`/services/${relSlug}`} className="group block p-5 bg-white rounded-xl border border-border hover:border-brand-300 hover:shadow-md transition-all">
-                          <p className="font-semibold text-sm mb-1 group-hover:text-brand-600 transition-colors">{rel.name}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{rel.shortDescription}</p>
-                          <div className="flex items-center text-xs font-medium text-brand-600">
-                            Learn more <ArrowRight className="ml-1 w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex gap-3">
+                            <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                            <p className="text-sm text-yellow-800">
+                              Our Assistance Team will verify all documents before processing. Additional documents may be requested based on your specific case.
+                            </p>
                           </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground">Documents list will be shared after booking your consultation.</p>
+                      )}
+                    </section>
+                  )}
+
+                  {/* Process */}
+                  {activeTab === "Process" && (
+                    <section>
+                      <h2 className="text-2xl font-bold font-heading mb-6">How It Works</h2>
+                      {service.process?.length > 0 ? (
+                        <div className="space-y-0">
+                          {service.process.map((step: any, i: number) => (
+                            <motion.div key={step.step} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
+                              className="flex gap-5">
+                              <div className="flex flex-col items-center">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-sm shadow-lg shrink-0">
+                                  {step.step}
+                                </div>
+                                {i < service.process.length - 1 && <div className="w-0.5 h-full bg-gradient-to-b from-brand-300 to-transparent min-h-[40px] mt-1" />}
+                              </div>
+                              <div className="pb-8 flex-1">
+                                <h3 className="font-bold text-base mb-1">{step.title}</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">Process details will be discussed during your consultation.</p>
+                      )}
+                    </section>
+                  )}
+
+                  {/* FAQs */}
+                  {activeTab === "FAQs" && (
+                    <section>
+                      <h2 className="text-2xl font-bold font-heading mb-5">Frequently Asked Questions</h2>
+                      {service.faqs?.length > 0 ? (
+                        <div className="space-y-3">
+                          {service.faqs.map((faq: any, i: number) => (
+                            <FAQItem key={i} q={faq.q} a={faq.a} index={i} />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">FAQs will be added soon.</p>
+                      )}
+                    </section>
+                  )}
+
+                  {/* Related Services */}
+                  {activeTab === "Related Services" && (
+                    <section>
+                      <h2 className="text-2xl font-bold font-heading mb-5">Related Services</h2>
+                      {service.relatedServices?.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          {service.relatedServices.map((relSlug: string) => {
+                            const rel = STATIC_SERVICES[relSlug];
+                            if (!rel) return null;
+                            return (
+                              <Link key={relSlug} href={`/services/${relSlug}`} className="group block p-5 bg-white rounded-xl border border-border hover:border-brand-300 hover:shadow-md transition-all">
+                                <p className="font-semibold text-sm mb-1 group-hover:text-brand-600 transition-colors">{rel.name}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{rel.shortDescription}</p>
+                                <div className="flex items-center text-xs font-medium text-brand-600">
+                                  Learn more <ArrowRight className="ml-1 w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No related services found.</p>
+                      )}
+                    </section>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             {/* ── Sticky Sidebar ── */}
