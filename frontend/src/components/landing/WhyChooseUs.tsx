@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Shield, Zap, Star, Clock, HeadphonesIcon, Lock, Bot, Video } from "lucide-react";
+import { Shield, Zap, Star, Clock, Lock, Video } from "lucide-react";
 
 const features = [
   {
@@ -50,15 +50,6 @@ const features = [
     glow: "group-hover:shadow-purple-200",
   },
   {
-    icon: Bot,
-    title: "AI-Powered Matching",
-    description: "Gemini AI recommends the best CA professionals based on your specific financial needs.",
-    gradient: "from-pink-500 to-rose-500",
-    iconBg: "bg-pink-50",
-    iconColor: "text-pink-600",
-    glow: "group-hover:shadow-pink-200",
-  },
-  {
     icon: Clock,
     title: "Flexible Scheduling",
     description: "Morning, afternoon, or evening — book consultations that fit your schedule, including weekends.",
@@ -66,15 +57,6 @@ const features = [
     iconBg: "bg-orange-50",
     iconColor: "text-orange-600",
     glow: "group-hover:shadow-orange-200",
-  },
-  {
-    icon: HeadphonesIcon,
-    title: "24/7 Support",
-    description: "Round-the-clock customer support via chat, WhatsApp, and email. We're always here to help.",
-    gradient: "from-teal-500 to-cyan-500",
-    iconBg: "bg-teal-50",
-    iconColor: "text-teal-600",
-    glow: "group-hover:shadow-teal-200",
   },
 ];
 
