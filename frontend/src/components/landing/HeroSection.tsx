@@ -3,8 +3,8 @@
 import { motion, useScroll, useTransform, animate, useInView, useMotionValue } from "framer-motion";
 import Link from "next/link";
 import {
-  ArrowRight, Shield, Star, Users, CheckCircle,
-  Award, Zap, CalendarCheck, MessageSquare,
+  ArrowRight, Star, Users, CheckCircle,
+  Award, CalendarCheck, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useEffect, useState } from "react";
@@ -16,12 +16,6 @@ const stats = [
   { to: 4.9, suffix: "★", decimals: 1, label: "Satisfaction", icon: Star, color: "text-yellow-400" },
 ];
 
-const trustBadges = [
-  { label: "ICAI Verified", icon: Shield },
-  { label: "Secure Payments", icon: Zap },
-  { label: "Money-back Guarantee", icon: CheckCircle },
-  { label: "100% Confidential", icon: Award },
-];
 
 
 function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: string; decimals?: number }) {
@@ -107,16 +101,6 @@ export function HeroSection() {
 <div className="container mx-auto px-4 py-24 relative z-10">
         <div className="max-w-5xl mx-auto text-center">
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 bg-white/15 border border-white/30 rounded-full px-4 py-2 text-sm font-medium text-white mb-6 backdrop-blur-sm"
-          >
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            India&apos;s Most Trusted CA Platform
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -175,27 +159,9 @@ export function HeroSection() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap justify-center gap-3 mb-16"
-          >
-            {trustBadges.map(({ label, icon: Icon }) => (
-              <motion.div
-                key={label}
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.25)" }}
-                className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/30 rounded-full px-3 py-1.5 text-xs font-medium text-white cursor-default"
-              >
-                <Icon className="w-3.5 h-3.5 text-green-400" />
-                {label}
-              </motion.div>
-            ))}
-          </motion.div>
-
-          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
           >
             {stats.map((stat, i) => (
