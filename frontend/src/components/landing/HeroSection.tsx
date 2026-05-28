@@ -1,20 +1,12 @@
 "use client";
 
-import { motion, animate, useInView, useMotionValue, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  ArrowRight, Star, Users, CheckCircle, Award,
-  CalendarCheck, Shield, Lock, Quote,
+  ArrowRight, CalendarCheck, Shield, Lock, Quote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef, useEffect, useState } from "react";
-
-const stats = [
-  { to: 10000, suffix: "+", label: "Happy Clients", icon: Users },
-  { to: 500, suffix: "+", label: "Verified CAs", icon: Award },
-  { to: 25000, suffix: "+", label: "Cases Filed", icon: CheckCircle },
-  { to: 4.9, suffix: "★", decimals: 1, label: "Avg Rating", icon: Star },
-];
+import { useEffect, useState } from "react";
 
 const rotatingWords = ["Tax Filing", "GST Compliance", "Registrations", "Audits", "Payroll", "Planning"];
 
@@ -69,24 +61,6 @@ const quotes = [
   },
 ];
 
-function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: string; decimals?: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.5 });
-  const count = useMotionValue(0);
-  const [display, setDisplay] = useState(`0${suffix}`);
-
-  useEffect(() => {
-    if (!isInView) return;
-    const controls = animate(count, to, { duration: 2, ease: "easeOut" });
-    const unsub = count.on("change", (v) => {
-      setDisplay(`${decimals > 0 ? v.toFixed(decimals) : Math.floor(v).toLocaleString("en-IN")}${suffix}`);
-    });
-    return () => { controls.stop(); unsub(); };
-  }, [isInView]);
-
-  return <span ref={ref}>{display}</span>;
-}
-
 function RotatingWord({ idx }: { idx: number }) {
   const [visible, setVisible] = useState(true);
   const [currentIdx, setCurrentIdx] = useState(idx);
@@ -135,18 +109,9 @@ function QuoteCarousel({ activeIdx }: { activeIdx: number }) {
             &ldquo;{q.text}&rdquo;
           </p>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${q.color} flex items-center justify-center text-white text-xs font-extrabold shrink-0`}>
-                {q.initials}
-              </div>
-              <div>
-                <p className="text-white text-sm font-bold leading-tight">{q.author}</p>
-                <p className="text-slate-400 text-xs">{q.role}</p>
-              </div>
-            </div>
-            <span className={`text-xs font-bold bg-gradient-to-r ${q.color} bg-clip-text text-transparent border border-white/10 rounded-full px-3 py-1 shrink-0`}>
+          {/* Footer — tag only */}
+          <div className="flex justify-end">
+            <span className={`text-xs font-bold bg-gradient-to-r ${q.color} bg-clip-text text-transparent border border-white/10 rounded-full px-3 py-1`}>
               {q.tag}
             </span>
           </div>
@@ -283,26 +248,6 @@ export function HeroSection() {
 
         </div>
 
-        {/* ── Bottom Stats Bar ── */}
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 border-t border-white/8 pt-8">
-          {stats.map((s, i) => (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 + i * 0.08 }}
-              whileHover={{ scale: 1.04 }}
-              className="flex items-center gap-4 bg-white/[0.04] border border-white/8 rounded-2xl px-5 py-4 cursor-default group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/30 to-indigo-600/30 border border-white/10 flex items-center justify-center shrink-0 group-hover:from-violet-500/50 group-hover:to-indigo-600/50 transition-all">
-                <s.icon className="w-5 h-5 text-violet-300" />
-              </div>
-              <div>
-                <p className="text-2xl font-extrabold text-white leading-none">
-                  <Counter to={s.to} suffix={s.suffix} decimals={s.decimals || 0} />
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
       </div>
 
       {/* Bottom wave */}
