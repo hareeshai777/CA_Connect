@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle, ArrowRight, Star, Users, Clock,
   Loader2, FileText, ChevronDown, Shield, Zap,
-  Calendar, IndianRupee, MessageSquare, Award,
+  Calendar, IndianRupee, Award,
   AlertCircle, Building, BarChart3,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -393,9 +393,6 @@ export default function ServiceDetailPage() {
                       <Calendar className="mr-2 w-4 h-4" /> Book Consultation — ₹499
                     </Button>
                   )}
-                  <Button size="lg" variant="outline" className="rounded-xl border-white/20 text-white hover:bg-white/10 backdrop-blur-sm" asChild>
-                    <Link href="/client/ai-chat"><MessageSquare className="mr-2 w-4 h-4" /> Ask AI Assistant</Link>
-                  </Button>
                 </div>
               </div>
             </div>
@@ -542,10 +539,6 @@ export default function ServiceDetailPage() {
                     <Calendar className="mr-2 w-4 h-4" />
                     {isAuthenticated ? "Book Consultation — ₹499" : "Sign In to Book — ₹499"}
                   </Button>
-                  <Button variant="outline" className="w-full h-10 rounded-xl text-sm" asChild>
-                    <Link href="/client/ai-chat"><MessageSquare className="mr-2 w-4 h-4" /> Chat with AI First</Link>
-                  </Button>
-
                   {/* Trust signals */}
                   <div className="mt-5 pt-5 border-t border-border space-y-2.5">
                     {[
@@ -574,15 +567,6 @@ export default function ServiceDetailPage() {
                   </div>
                 )}
 
-                {/* AI Assistant prompt */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-5 text-white">
-                  <MessageSquare className="w-6 h-6 mb-2 opacity-80" />
-                  <p className="font-semibold text-sm mb-1">Not sure where to start?</p>
-                  <p className="text-xs text-indigo-200 mb-4">Our AI assistant can guide you to the right CA and service.</p>
-                  <Button className="w-full bg-white text-indigo-700 hover:bg-indigo-50 rounded-xl font-semibold text-sm" asChild>
-                    <Link href="/client/ai-chat">Ask AI Assistant</Link>
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
