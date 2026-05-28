@@ -4,10 +4,17 @@ import { motion, useScroll, useTransform, animate, useInView, useMotionValue } f
 import Link from "next/link";
 import {
   ArrowRight, Star, Users, CheckCircle,
-  Award, CalendarCheck, MessageSquare,
+  Award, CalendarCheck, MessageSquare, Shield, Zap, Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useEffect, useState } from "react";
+
+const trustBadges = [
+  { label: "ICAI Verified", icon: Shield },
+  { label: "Secure Payments", icon: Zap },
+  { label: "Money-back Guarantee", icon: CheckCircle },
+  { label: "100% Confidential", icon: Lock },
+];
 
 const stats = [
   { to: 10000, suffix: "+", label: "Total Clients", icon: Users, color: "text-blue-400" },
@@ -128,7 +135,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-10"
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-8"
           >
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
               <Button
@@ -158,10 +165,29 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
+          {/* Trust badges */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+            className="flex flex-wrap justify-center gap-3 mb-10"
+          >
+            {trustBadges.map(({ label, icon: Icon }) => (
+              <motion.div
+                key={label}
+                whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.25)" }}
+                className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/30 rounded-full px-3 py-1.5 text-xs font-medium text-white cursor-default"
+              >
+                <Icon className="w-3.5 h-3.5 text-green-400" />
+                {label}
+              </motion.div>
+            ))}
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
           >
             {stats.map((stat, i) => (
