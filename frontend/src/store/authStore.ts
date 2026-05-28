@@ -76,8 +76,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data } = await api.get("/auth/me");
           set({ user: data.data, isAuthenticated: true, isLoading: false });
-        } catch {
-          set({ user: null, isAuthenticated: false, isLoading: false });
+        } catch (err: any) {
+          // Only clear auth on actual 401/403 — not on network timeouts or server errors
+          // so that a Render cold-start doesn't log the user out
+          if (err?.response?.status === 401 || err?.response?.status === 403) {
+            set({ user: null, isAuthenticated: false, isLoading: false });
+          } else {
+            set({ isLoading: false });
+          }
         }
       },
     }),
@@ -86,6 +92,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
       }),
       // Called once localStorage has been read and store has been updated
       onRehydrateStorage: () => (state) => {
