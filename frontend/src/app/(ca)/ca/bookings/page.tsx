@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Calendar, Search, Video, RefreshCw, Clock } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Calendar, Search, Video, RefreshCw, Clock, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { formatCurrency, formatDateTime, getInitials } from "@/lib/utils";
+import { toast } from "sonner";
 
 const STATUS_TABS = ["ALL", "CONFIRMED", "COMPLETED", "CANCELLED", "PENDING"];
 
@@ -26,25 +27,46 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
 export default function CABookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("ALL");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (retryCount = 0) => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: String(page), limit: "15",
         ...(status !== "ALL" && { status }),
       });
-      const res = await api.get(`/bookings/ca?${params}`);
+      const res = await api.get(`/bookings/ca?${params}`, { signal: abortRef.current.signal });
       setBookings(res.data.data || []);
       setTotal(res.data.meta?.total || 0);
-    } catch { setBookings([]); } finally { setLoading(false); }
+    } catch (err: any) {
+      if (err?.code === "ERR_CANCELED") return; // aborted — ignore
+      if (retryCount < 1) {
+        // Auto-retry once after 2s (handles Render cold-start)
+        setTimeout(() => fetchBookings(retryCount + 1), 2000);
+        return;
+      }
+      setBookings([]);
+      const msg = getErrorMessage(err) || "Failed to load bookings";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchBookings(); }, [page, status]);
+  useEffect(() => {
+    fetchBookings();
+    return () => abortRef.current?.abort();
+  }, [page, status]);
 
   const filtered = search
     ? bookings.filter((b) =>
@@ -59,7 +81,7 @@ export default function CABookingsPage() {
           <h1 className="text-2xl font-bold font-heading">My Bookings</h1>
           <p className="text-muted-foreground mt-1">{total} total consultations</p>
         </div>
-        <Button variant="outline" size="sm" className="rounded-xl" onClick={fetchBookings}>
+        <Button variant="outline" size="sm" className="rounded-xl" onClick={() => fetchBookings()}>
           <RefreshCw className="w-4 h-4 mr-1" />Refresh
         </Button>
       </div>
@@ -82,6 +104,15 @@ export default function CABookingsPage() {
       <div className="space-y-3">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 bg-muted animate-pulse rounded-2xl" />)
+        ) : error ? (
+          <div className="text-center py-20 bg-red-50 rounded-2xl border border-red-100">
+            <AlertCircle className="w-12 h-12 text-red-300 mx-auto mb-3" />
+            <p className="text-red-600 font-medium mb-1">Could not load bookings</p>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" onClick={() => fetchBookings()}>
+              <RefreshCw className="w-4 h-4 mr-1" /> Try Again
+            </Button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Calendar, Search, Video, Star, RefreshCw, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
 export default function ClientBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("ALL");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -39,18 +40,37 @@ export default function ClientBookingsPage() {
   const [rescheduleSlotId, setRescheduleSlotId] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (retryCount = 0) => {
+    // Cancel any in-flight request
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({ page: String(page), limit: "15", ...(status !== "ALL" && { status }) });
-      const res = await api.get(`/bookings/my?${params}`);
+      const res = await api.get(`/bookings/my?${params}`, { signal: abortRef.current.signal });
       setBookings(res.data.data || []);
       setTotal(res.data.meta?.total || 0);
-    } catch { setBookings([]); toast.error("Failed to load bookings"); } finally { setLoading(false); }
+    } catch (err: any) {
+      if (err?.code === "ERR_CANCELED") return; // aborted — ignore
+      if (retryCount < 1) {
+        // Auto-retry once after 2s (handles Render cold-start)
+        setTimeout(() => fetchBookings(retryCount + 1), 2000);
+        return;
+      }
+      setBookings([]);
+      setError(getErrorMessage(err) || "Failed to load bookings");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchBookings(); }, [page, status]);
+  useEffect(() => {
+    fetchBookings();
+    return () => abortRef.current?.abort();
+  }, [page, status]);
 
   const handleJoin = async (bookingId: string) => {
     setJoiningId(bookingId);
@@ -114,7 +134,7 @@ export default function ClientBookingsPage() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div><h1 className="text-2xl font-bold font-heading">My Bookings</h1><p className="text-muted-foreground mt-1">{total} total consultations</p></div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="rounded-xl" onClick={fetchBookings}><RefreshCw className="w-4 h-4 mr-1" />Refresh</Button>
+          <Button variant="outline" size="sm" className="rounded-xl" onClick={() => fetchBookings()}><RefreshCw className="w-4 h-4 mr-1" />Refresh</Button>
           <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild><Link href="/services">+ Book Consultation</Link></Button>
         </div>
       </div>
@@ -137,6 +157,15 @@ export default function ClientBookingsPage() {
       <div className="space-y-3">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 bg-muted animate-pulse rounded-2xl" />)
+        ) : error ? (
+          <div className="text-center py-20 bg-red-50 rounded-2xl border border-red-100">
+            <Calendar className="w-12 h-12 text-red-300 mx-auto mb-3" />
+            <p className="text-red-600 font-medium mb-1">Could not load bookings</p>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" onClick={() => fetchBookings()}>
+              <RefreshCw className="w-4 h-4 mr-1" /> Retry
+            </Button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
