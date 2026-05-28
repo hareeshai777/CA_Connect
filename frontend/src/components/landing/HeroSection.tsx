@@ -4,15 +4,13 @@ import { motion, useScroll, useTransform, animate, useInView, useMotionValue } f
 import Link from "next/link";
 import {
   ArrowRight, Star, Users, CheckCircle,
-  Award, CalendarCheck, MessageSquare, Shield, Zap, Lock,
+  Award, CalendarCheck, MessageSquare, Shield, Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useEffect, useState } from "react";
 
 const trustBadges = [
   { label: "ICAI Verified", icon: Shield },
-  { label: "Secure Payments", icon: Zap },
-  { label: "Money-back Guarantee", icon: CheckCircle },
   { label: "100% Confidential", icon: Lock },
 ];
 
