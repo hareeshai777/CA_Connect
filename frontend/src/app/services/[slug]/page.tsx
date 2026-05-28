@@ -406,7 +406,7 @@ export default function ServiceDetailPage() {
         <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-2">
-              {["Overview", "Documents", "Process", "Pricing", "FAQs", "Related Services"].map((tab) => (
+              {["Overview", "Documents", "Process", "FAQs", "Related Services"].map((tab) => (
                 <a key={tab} href={`#${tab.toLowerCase().replace(/ /g, "-")}`} className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                   {tab}
                 </a>
@@ -487,34 +487,6 @@ export default function ServiceDetailPage() {
                 </section>
               )}
 
-              {/* Pricing */}
-              <section id="pricing">
-                <h2 className="text-2xl font-bold font-heading mb-5">Pricing</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    { plan: "Starter", price: service.basePrice, desc: "For individuals & small businesses", features: ["Basic service package", "1 CA assignment", "Email support", "Standard timeline"] },
-                    { plan: "Professional", price: Math.round(service.basePrice * 1.5), desc: "For growing businesses", features: ["Full service package", "Senior CA assignment", "Priority support", "Faster timeline"], popular: true },
-                    { plan: "Enterprise", price: Math.round(service.basePrice * 2.5), desc: "For large organizations", features: ["Custom service package", "Dedicated CA team", "24/7 support", "Expedited timeline"] },
-                  ].map((tier) => (
-                    <div key={tier.plan} className={`relative rounded-2xl border p-5 ${tier.popular ? "border-brand-500 bg-gradient-to-br from-brand-50 to-blue-50 shadow-lg" : "border-border bg-white"}`}>
-                      {tier.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold bg-brand-600 text-white px-3 py-1 rounded-full">Most Popular</div>}
-                      <h3 className="font-bold text-base mb-1">{tier.plan}</h3>
-                      <p className="text-2xl font-bold font-heading text-brand-600 mb-1">{formatCurrency(tier.price)}</p>
-                      <p className="text-xs text-muted-foreground mb-4">{tier.desc}</p>
-                      <ul className="space-y-2 mb-5">
-                        {tier.features.map((f) => <li key={f} className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />{f}</li>)}
-                      </ul>
-                      <Button className={`w-full rounded-xl text-sm ${tier.popular ? "bg-brand-600 hover:bg-brand-700 text-white" : ""}`} variant={tier.popular ? "default" : "outline"} onClick={handleBook}>
-                        Get Started
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                  <Shield className="w-3.5 h-3.5 text-green-500" />
-                  All plans include ₹499 initial consultation. Final price depends on complexity.
-                </p>
-              </section>
 
               {/* FAQs */}
               {service.faqs && (
