@@ -403,11 +403,25 @@ export default function ServiceDetailPage() {
         <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-2">
-              {["Overview", "Documents", "Process", "FAQs", "Related Services"].map((tab) => (
-                <a key={tab} href={`#${tab.toLowerCase().replace(/ /g, "-")}`} className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                  {tab}
-                </a>
-              ))}
+              {["Overview", "Documents", "Process", "FAQs", "Related Services"].map((tab) => {
+                const id = tab.toLowerCase().replace(/ /g, "-");
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      const el = document.getElementById(id);
+                      if (el) {
+                        const offset = 112; // navbar (64px) + service nav (~48px)
+                        const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                        window.scrollTo({ top, behavior: "smooth" });
+                      }
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -419,7 +433,7 @@ export default function ServiceDetailPage() {
             <div className="lg:col-span-2 space-y-12">
 
               {/* Overview */}
-              <section id="overview">
+              <section id="overview" className="scroll-mt-32">
                 <h2 className="text-2xl font-bold font-heading mb-4">Service Overview</h2>
                 <p className="text-muted-foreground leading-relaxed mb-6">{service.description}</p>
                 {benefits.length > 0 && (
@@ -437,7 +451,7 @@ export default function ServiceDetailPage() {
 
               {/* Required Documents */}
               {service.requiredDocuments && (
-                <section id="documents">
+                <section id="documents" className="scroll-mt-32">
                   <h2 className="text-2xl font-bold font-heading mb-4">Required Documents</h2>
                   <p className="text-muted-foreground mb-5 text-sm">Upload these documents after booking your consultation.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -462,7 +476,7 @@ export default function ServiceDetailPage() {
 
               {/* Step-by-Step Process */}
               {service.process && (
-                <section id="process">
+                <section id="process" className="scroll-mt-32">
                   <h2 className="text-2xl font-bold font-heading mb-6">How It Works</h2>
                   <div className="space-y-0">
                     {service.process.map((step: any, i: number) => (
@@ -487,7 +501,7 @@ export default function ServiceDetailPage() {
 
               {/* FAQs */}
               {service.faqs && (
-                <section id="faqs">
+                <section id="faqs" className="scroll-mt-32">
                   <h2 className="text-2xl font-bold font-heading mb-5">Frequently Asked Questions</h2>
                   <div className="space-y-3">
                     {service.faqs.map((faq: any, i: number) => (
@@ -499,7 +513,7 @@ export default function ServiceDetailPage() {
 
               {/* Related Services */}
               {service.relatedServices && (
-                <section id="related-services">
+                <section id="related-services" className="scroll-mt-32">
                   <h2 className="text-2xl font-bold font-heading mb-5">Related Services</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {service.relatedServices.map((relSlug: string) => {

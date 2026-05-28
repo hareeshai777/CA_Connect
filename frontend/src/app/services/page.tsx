@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
 
 const iconMap: Record<string, any> = {
   "gst-filing": FileText,
@@ -195,24 +194,13 @@ export default function ServicesPage() {
 
                         {/* Footer */}
                         <div className="flex items-center justify-between pt-4 border-t border-border">
-                          <div>
-                            {service.showPrice !== false ? (
-                              <>
-                                <span className="text-xs text-muted-foreground">Starting from</span>
-                                <p className="text-lg font-bold text-brand-600">{formatCurrency(service.basePrice)}</p>
-                              </>
-                            ) : (
-                              <span className="text-sm font-medium text-brand-600">Get a Quote</span>
-                            )}
-                          </div>
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Users className="w-3.5 h-3.5" />
                             {service._count?.specializations || 0}+ CAs
                           </div>
-                        </div>
-
-                        <div className="mt-4 flex items-center text-sm font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                          View details <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          <div className="flex items-center text-sm font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            View details <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </div>
                         </div>
                       </div>
                     </Link>
