@@ -180,21 +180,48 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#06091a]">
-      {/* Layered gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#06091a] via-[#0d1340] to-[#150b35]" />
+    <section className="relative min-h-screen overflow-hidden" style={{ background: "#07091f" }}>
 
-      {/* Subtle dot grid */}
-      <div className="absolute inset-0 opacity-[0.07]"
-        style={{ backgroundImage: "radial-gradient(rgba(139,92,246,0.7) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      {/* Rich multi-layer aurora gradient */}
+      <div className="absolute inset-0" style={{
+        background: `
+          radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,60,220,0.45) 0%, transparent 60%),
+          radial-gradient(ellipse 70% 50% at 90% 0%, rgba(14,165,233,0.25) 0%, transparent 55%),
+          radial-gradient(ellipse 60% 70% at 50% 100%, rgba(79,50,180,0.35) 0%, transparent 65%),
+          radial-gradient(ellipse 50% 40% at 80% 60%, rgba(20,184,166,0.15) 0%, transparent 50%),
+          linear-gradient(160deg, #0d0b2e 0%, #0a1045 35%, #070d38 65%, #0b0828 100%)
+        `
+      }} />
+
+      {/* Mesh grid */}
+      <div className="absolute inset-0 opacity-[0.06]"
+        style={{ backgroundImage: "linear-gradient(rgba(148,130,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(148,130,255,0.6) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+
+      {/* Diagonal light streak */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(115deg, transparent 30%, rgba(120,100,255,0.04) 50%, transparent 70%)" }} />
 
       {/* Animated glow blobs */}
-      <motion.div animate={{ scale: [1, 1.25, 1], opacity: [0.25, 0.45, 0.25] }}
+      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.65, 0.4] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-violet-700/25 rounded-full blur-[130px] pointer-events-none" />
-      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.35, 0.15] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-        className="absolute bottom-0 right-0 w-[700px] h-[500px] bg-indigo-600/20 rounded-full blur-[150px] pointer-events-none" />
+        className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full blur-[140px] pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(109,40,217,0.55) 0%, rgba(67,56,202,0.3) 50%, transparent 75%)" }} />
+
+      <motion.div animate={{ scale: [1, 1.25, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute -bottom-20 -right-20 w-[650px] h-[650px] rounded-full blur-[120px] pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(14,165,233,0.35) 0%, rgba(79,70,229,0.25) 50%, transparent 75%)" }} />
+
+      <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.38, 0.2] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] rounded-full blur-[100px] pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(20,184,166,0.18) 0%, rgba(56,189,248,0.12) 50%, transparent 75%)" }} />
+
+      {/* Warm amber accent glow — bottom center */}
+      <motion.div animate={{ opacity: [0.1, 0.22, 0.1], scale: [1, 1.1, 1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[200px] rounded-full blur-[80px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse, rgba(251,146,60,0.2) 0%, transparent 70%)" }} />
 
       <div className="relative z-10 container mx-auto px-6 pt-24 pb-12">
         <div className="flex flex-col items-center">
@@ -202,7 +229,7 @@ export function HeroSection() {
           {/* ── Main Content ── */}
           <div className="max-w-3xl text-center pt-16">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-semibold text-violet-300 mb-6 tracking-wider uppercase">
+              className="inline-flex items-center gap-2 bg-white/[0.08] border border-violet-400/25 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-semibold text-violet-200 mb-6 tracking-wider uppercase">
               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
               India&apos;s Most Trusted CA Platform
             </motion.div>
