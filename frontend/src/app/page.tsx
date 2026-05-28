@@ -9,6 +9,7 @@ import { FAQSection } from "@/components/landing/FAQSection";
 import { FeaturedCAsSection } from "@/components/landing/FeaturedCAsSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { ContactSection } from "@/components/landing/ContactSection";
+import { StatsSection } from "@/components/landing/StatsSection";
 
 export default function HomePage() {
   return (
@@ -17,6 +18,7 @@ export default function HomePage() {
       <HeroSection />
       <FeaturedCAsSection />
       <ServicesSection />
+      <StatsSection />
       <WhyChooseUs />
       <HowItWorks />
       <TestimonialsSection />
