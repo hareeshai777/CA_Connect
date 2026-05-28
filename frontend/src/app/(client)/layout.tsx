@@ -22,17 +22,18 @@ const navItems = [
 ];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  const { user, accessToken, isAuthenticated, logout, fetchMe } = useAuthStore();
+  const { user, accessToken, isAuthenticated, logout, fetchMe, hasHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
+    if (!hasHydrated) return; // wait for localStorage to be read
     if (!accessToken) { router.push("/auth/login"); return; }
     if (!user || !isAuthenticated) { fetchMe(); return; }
     if (user.role === "CA_PROFESSIONAL") { router.push("/ca/dashboard"); return; }
     if (user.role === "SUPER_ADMIN") { router.push("/admin/dashboard"); return; }
     if (user.role === "ASSISTANCE_TEAM") { router.push("/assistance/dashboard"); return; }
-  }, [accessToken, isAuthenticated, user]);
+  }, [hasHydrated, accessToken, isAuthenticated, user]);
 
   const handleLogout = async () => {
     try { await api.post("/auth/logout"); } catch {}

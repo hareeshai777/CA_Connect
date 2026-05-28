@@ -26,18 +26,19 @@ const navItems = [
 
 export default function AssistanceLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, accessToken, isAuthenticated, logout, fetchMe } = useAuthStore();
+  const { user, accessToken, isAuthenticated, logout, fetchMe, hasHydrated } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!accessToken) { router.push("/auth/login"); return; }
     if (!user || !isAuthenticated) { fetchMe(); return; }
     if (user.role !== "ASSISTANCE_TEAM" && user.role !== "SUPER_ADMIN") {
       if (user.role === "CA_PROFESSIONAL") router.push("/ca/dashboard");
       else router.push("/client/dashboard");
     }
-  }, [accessToken, isAuthenticated, user, router]);
+  }, [hasHydrated, accessToken, isAuthenticated, user, router]);
 
   const handleLogout = async () => {
     try { await api.post("/auth/logout"); } catch {}
