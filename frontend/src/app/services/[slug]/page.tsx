@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
@@ -360,7 +360,7 @@ export default function ServiceDetailPage() {
   }
 
   const benefits: string[] = service.benefits?.create?.map((b: any) => b.benefit) || service.benefits?.map((b: any) => b.benefit) || [];
-  const ServiceIcon = SERVICE_ICONS[slug] || FileText;
+  const ServiceIcon = (SERVICE_ICONS[slug] || FileText) as React.ComponentType<{ className?: string }>;
 
   return (
     <div className="min-h-screen flex flex-col">
