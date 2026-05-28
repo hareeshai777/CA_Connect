@@ -6,10 +6,10 @@ import { ArrowRight, TrendingUp, Search, Users, Award, Star, CheckCircle } from 
 import { Button } from "@/components/ui/button";
 
 const floatingStats = [
-  { icon: Users, value: "10,000+", label: "Clients", delay: 0, x: "-60%", y: "-40%" },
-  { icon: Award, value: "500+", label: "Verified CAs", delay: 0.3, x: "55%", y: "-50%" },
-  { icon: Star, value: "4.9★", label: "Rating", delay: 0.6, x: "-65%", y: "40%" },
-  { icon: CheckCircle, value: "25K+", label: "Registrations", delay: 0.9, x: "60%", y: "45%" },
+  { icon: Users, value: "10,000+", label: "Clients", delay: 0, position: "top-8 left-8" },
+  { icon: Award, value: "500+", label: "Verified CAs", delay: 0.3, position: "top-8 right-8" },
+  { icon: Star, value: "4.9★", label: "Rating", delay: 0.6, position: "bottom-8 left-8" },
+  { icon: CheckCircle, value: "25K+", label: "Registrations", delay: 0.9, position: "bottom-8 right-8" },
 ];
 
 export function CTASection() {
@@ -38,17 +38,15 @@ export function CTASection() {
       </div>
 
       {/* Floating stat badges */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {floatingStats.map((stat, i) => (
+      <div className="absolute inset-0 pointer-events-none">
+        {floatingStats.map((stat) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, scale: 0.5 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: stat.delay + 0.4, duration: 0.5, type: "spring" }}
-            animate={{ y: [0, -8, 0] }}
-            style={{ x: stat.x, y: stat.y, animationDelay: `${i * 0.5}s` }}
-            className="absolute hidden xl:flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-2.5 text-white"
+            className={`absolute hidden xl:flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-2.5 text-white ${stat.position}`}
           >
             <stat.icon className="w-4 h-4 text-yellow-300 shrink-0" />
             <div>
@@ -112,7 +110,7 @@ export function CTASection() {
           </motion.div>
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-            <Button size="xl" variant="outline" className="border-white/40 text-white hover:bg-white/15 rounded-xl font-semibold" asChild>
+            <Button size="xl" className="bg-transparent border-2 border-white/50 text-white hover:bg-white/15 rounded-xl font-semibold" asChild>
               <Link href="/ca/register">
                 <TrendingUp className="mr-2 h-5 w-5" />
                 Join as CA Professional
