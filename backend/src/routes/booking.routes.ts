@@ -112,6 +112,45 @@ router.patch("/:id/reschedule", authenticate, authorize("CLIENT"), asyncHandler(
   return sendSuccess(res, "Booking rescheduled successfully", updated);
 }));
 
+// CA reschedules a booking — proposes a new slot from their own schedule
+router.patch("/:id/ca-reschedule", authenticate, authorize("CA_PROFESSIONAL"), asyncHandler(async (req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const userId = req.user!.userId;
+  const { slotId } = req.body;
+
+  if (!slotId) return sendError(res, "New slot ID is required", 400);
+
+  const ca = await prisma.cAProfessional.findUnique({ where: { userId } });
+  if (!ca) return sendError(res, "CA profile not found", 404);
+
+  const booking = await prisma.booking.findFirst({
+    where: { id: req.params.id, caProfessionalId: ca.id },
+  });
+  if (!booking) return sendError(res, "Booking not found", 404);
+  if (!["CONFIRMED", "PENDING"].includes(booking.status))
+    return sendError(res, "Only confirmed or pending bookings can be rescheduled", 400);
+
+  const newSlot = await prisma.timeSlot.findUnique({ where: { id: slotId } });
+  if (!newSlot || newSlot.isBooked || newSlot.isBlocked)
+    return sendError(res, "Selected slot is not available", 400);
+  if (newSlot.caProfessionalId !== ca.id)
+    return sendError(res, "Slot does not belong to your schedule", 400);
+
+  const scheduledAt = new Date(`${newSlot.date.toISOString().split("T")[0]}T${newSlot.startTime}`);
+
+  const updated = await prisma.$transaction(async (tx) => {
+    await tx.timeSlot.update({ where: { id: booking.timeSlotId }, data: { isBooked: false } });
+    await tx.timeSlot.update({ where: { id: slotId }, data: { isBooked: true } });
+    return tx.booking.update({
+      where: { id: booking.id },
+      data: { timeSlotId: slotId, scheduledAt, clientJoinedAt: null },
+    });
+  });
+
+  return sendSuccess(res, "Meeting rescheduled successfully", updated);
+}));
+
 router.put(
   "/:id/cancel",
   authenticate,
