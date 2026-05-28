@@ -12,18 +12,6 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
 
-const clientServices = [
-  { name: "GST Registration", price: "₹999", note: "One-time" },
-  { name: "GST Monthly Filing (GSTR-1 + 3B)", price: "₹799", note: "per month" },
-  { name: "Income Tax Return (Salaried)", price: "₹499", note: "per year" },
-  { name: "Income Tax Return (Business)", price: "₹1,999", note: "per year" },
-  { name: "Company Registration (Pvt Ltd)", price: "₹4,999", note: "one-time" },
-  { name: "Audit Services", price: "₹9,999", note: "onwards" },
-  { name: "Trademark Registration", price: "₹2,999", note: "one-time" },
-  { name: "Accounting (Monthly)", price: "₹1,999", note: "per month" },
-  { name: "Payroll Processing", price: "₹1,499", note: "per month" },
-  { name: "Startup Consulting (1hr)", price: "₹1,999", note: "per session" },
-];
 
 const highlights = [
   { label: "Verified CA Professionals", desc: "ICAI-registered experts reviewed by our team" },
@@ -87,45 +75,6 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* Service Pricing Table */}
-        <section className="container mx-auto px-4 py-16">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold font-heading mb-3">Service Pricing</h2>
-              <p className="text-muted-foreground text-lg">Pay ₹499 per consultation. Rates below reflect the starting service cost handled by your CA.</p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-sm mb-10">
-              <div className="grid grid-cols-3 bg-muted/50 border-b border-border px-6 py-3 text-sm font-semibold text-muted-foreground">
-                <span>Service</span>
-                <span className="text-center">Starting Price</span>
-                <span className="text-right">Frequency</span>
-              </div>
-              {clientServices.map((svc, i) => (
-                <motion.div
-                  key={svc.name}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="grid grid-cols-3 items-center px-6 py-4 border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
-                >
-                  <span className="font-medium">{svc.name}</span>
-                  <span className="text-center text-brand-600 font-bold text-lg">{svc.price}</span>
-                  <span className="text-right text-sm text-muted-foreground">{svc.note}</span>
-                </motion.div>
-              ))}
-            </div>
-
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center">
-              <p className="text-sm text-blue-700 mb-3">
-                <strong>Note:</strong> The ₹499 consultation fee is charged per booking. Service implementation costs (listed above) are discussed directly with your CA during the session. All prices are exclusive of 18% GST.
-              </p>
-              <Button className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild>
-                <Link href="/services">Book Consultation — ₹499 <ArrowRight className="ml-2 w-4 h-4" /></Link>
-              </Button>
-            </div>
-          </div>
-        </section>
 
         {/* Bottom CTA */}
         <div className="bg-muted/30 border-t border-border py-10 px-4">
