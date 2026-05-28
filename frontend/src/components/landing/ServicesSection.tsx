@@ -6,127 +6,85 @@ import { motion } from "framer-motion";
 import { ArrowRight, FileText, Building, BarChart3, Shield, CheckSquare, Lightbulb, TrendingUp, BookOpen, Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
 
 const STATIC_SERVICES = [
-  { slug: "gst-filing", name: "GST Filing", desc: "Complete GST registration, returns, and compliance management.", tag: "Most Popular", gradient: "from-blue-500 to-cyan-500", bgGradient: "from-blue-50 to-cyan-50", borderColor: "border-blue-200", icon: FileText, basePrice: 149900, showPrice: true },
-  { slug: "income-tax-filing", name: "Income Tax Filing", desc: "Individual and corporate ITR filing with maximum deductions.", tag: "High Demand", gradient: "from-green-500 to-emerald-500", bgGradient: "from-green-50 to-emerald-50", borderColor: "border-green-200", icon: BarChart3, basePrice: 99900, showPrice: true },
-  { slug: "company-registration", name: "Company Registration", desc: "Pvt Ltd, LLP, OPC, and Section 8 company incorporation.", tag: "Complete Package", gradient: "from-purple-500 to-violet-500", bgGradient: "from-purple-50 to-violet-50", borderColor: "border-purple-200", icon: Building, basePrice: 499900, showPrice: true },
-  { slug: "audit-services", name: "Audit Services", desc: "Statutory, tax, internal and concurrent audit services.", tag: "Enterprise", gradient: "from-red-500 to-rose-500", bgGradient: "from-red-50 to-rose-50", borderColor: "border-red-200", icon: Shield, basePrice: 999900, showPrice: true },
-  { slug: "trademark-registration", name: "Trademark Registration", desc: "Brand protection through trademark filing and monitoring.", tag: "IP Protection", gradient: "from-orange-500 to-amber-500", bgGradient: "from-orange-50 to-amber-50", borderColor: "border-orange-200", icon: CheckSquare, basePrice: 299900, showPrice: true },
-  { slug: "business-compliance", name: "Business Compliance", desc: "ROC filings, annual returns, and regulatory compliance.", tag: "Recurring", gradient: "from-teal-500 to-cyan-600", bgGradient: "from-teal-50 to-cyan-50", borderColor: "border-teal-200", icon: Shield, basePrice: 299900, showPrice: true },
-  { slug: "startup-consulting", name: "Startup Consulting", desc: "End-to-end startup advisory, funding & compliance planning.", tag: "Startup Special", gradient: "from-yellow-500 to-orange-400", bgGradient: "from-yellow-50 to-orange-50", borderColor: "border-yellow-200", icon: Lightbulb, basePrice: 199900, showPrice: true },
-  { slug: "financial-planning", name: "Financial Planning", desc: "Investment, retirement & tax-efficient wealth management.", tag: "Advisory", gradient: "from-indigo-500 to-blue-600", bgGradient: "from-indigo-50 to-blue-50", borderColor: "border-indigo-200", icon: TrendingUp, basePrice: 149900, showPrice: true },
-  { slug: "accounting-services", name: "Accounting Services", desc: "Daily bookkeeping, P&L, balance sheet, and MIS reports.", tag: "Monthly Plan", gradient: "from-pink-500 to-rose-500", bgGradient: "from-pink-50 to-rose-50", borderColor: "border-pink-200", icon: BookOpen, basePrice: 199900, showPrice: true },
-  { slug: "payroll-services", name: "Payroll Services", desc: "Salary processing, PF/ESI, TDS, and Form 16 generation.", tag: "HR Friendly", gradient: "from-cyan-500 to-sky-500", bgGradient: "from-cyan-50 to-sky-50", borderColor: "border-cyan-200", icon: Users, basePrice: 149900, showPrice: true },
+  { slug: "gst-filing", name: "GST Filing", desc: "Registration, returns, ITC reconciliation & notice handling.", icon: FileText, gradient: "from-blue-500 to-cyan-400", glow: "group-hover:shadow-blue-500/25", tag: "Most Popular" },
+  { slug: "income-tax-filing", name: "Income Tax Filing", desc: "ITR-1 to ITR-7 with maximum deductions & refund processing.", icon: BarChart3, gradient: "from-emerald-500 to-teal-400", glow: "group-hover:shadow-emerald-500/25", tag: "High Demand" },
+  { slug: "company-registration", name: "Company Registration", desc: "Pvt Ltd, LLP, OPC & Section 8 incorporation end-to-end.", icon: Building, gradient: "from-violet-500 to-purple-400", glow: "group-hover:shadow-violet-500/25", tag: "Complete Package" },
+  { slug: "audit-services", name: "Audit Services", desc: "Statutory, tax, internal & concurrent audit with certification.", icon: Shield, gradient: "from-rose-500 to-pink-400", glow: "group-hover:shadow-rose-500/25", tag: "Enterprise" },
+  { slug: "trademark-registration", name: "Trademark Registration", desc: "Brand protection via filing, monitoring & renewal.", icon: CheckSquare, gradient: "from-amber-500 to-orange-400", glow: "group-hover:shadow-amber-500/25", tag: "IP Protection" },
+  { slug: "business-compliance", name: "Business Compliance", desc: "ROC filings, annual returns & statutory compliance.", icon: Shield, gradient: "from-teal-500 to-cyan-500", glow: "group-hover:shadow-teal-500/25", tag: "Recurring" },
+  { slug: "startup-consulting", name: "Startup Consulting", desc: "DPIIT recognition, funding compliance & financial modelling.", icon: Lightbulb, gradient: "from-yellow-500 to-amber-400", glow: "group-hover:shadow-yellow-500/25", tag: "Startup Special" },
+  { slug: "financial-planning", name: "Financial Planning", desc: "Investment, retirement & tax-efficient wealth management.", icon: TrendingUp, gradient: "from-indigo-500 to-blue-400", glow: "group-hover:shadow-indigo-500/25", tag: "Advisory" },
+  { slug: "accounting-services", name: "Accounting Services", desc: "Bookkeeping, P&L, balance sheet & MIS reports.", icon: BookOpen, gradient: "from-pink-500 to-rose-400", glow: "group-hover:shadow-pink-500/25", tag: "Monthly Plan" },
+  { slug: "payroll-services", name: "Payroll Services", desc: "Salary processing, PF/ESI, TDS & Form 16 generation.", icon: Users, gradient: "from-cyan-500 to-sky-400", glow: "group-hover:shadow-cyan-500/25", tag: "HR Friendly" },
 ];
 
-const styleMap: Record<string, { gradient: string; bgGradient: string; borderColor: string; tag: string; icon: any }> = {
-  "gst-filing": { gradient: "from-blue-500 to-cyan-500", bgGradient: "from-blue-50 to-cyan-50", borderColor: "border-blue-200", tag: "Most Popular", icon: FileText },
-  "income-tax-filing": { gradient: "from-green-500 to-emerald-500", bgGradient: "from-green-50 to-emerald-50", borderColor: "border-green-200", tag: "High Demand", icon: BarChart3 },
-  "company-registration": { gradient: "from-purple-500 to-violet-500", bgGradient: "from-purple-50 to-violet-50", borderColor: "border-purple-200", tag: "Complete Package", icon: Building },
-  "audit-services": { gradient: "from-red-500 to-rose-500", bgGradient: "from-red-50 to-rose-50", borderColor: "border-red-200", tag: "Enterprise", icon: Shield },
-  "trademark-registration": { gradient: "from-orange-500 to-amber-500", bgGradient: "from-orange-50 to-amber-50", borderColor: "border-orange-200", tag: "IP Protection", icon: CheckSquare },
-  "business-compliance": { gradient: "from-teal-500 to-cyan-600", bgGradient: "from-teal-50 to-cyan-50", borderColor: "border-teal-200", tag: "Recurring", icon: Shield },
-  "startup-consulting": { gradient: "from-yellow-500 to-orange-400", bgGradient: "from-yellow-50 to-orange-50", borderColor: "border-yellow-200", tag: "Startup Special", icon: Lightbulb },
-  "financial-planning": { gradient: "from-indigo-500 to-blue-600", bgGradient: "from-indigo-50 to-blue-50", borderColor: "border-indigo-200", tag: "Advisory", icon: TrendingUp },
-  "accounting-services": { gradient: "from-pink-500 to-rose-500", bgGradient: "from-pink-50 to-rose-50", borderColor: "border-pink-200", tag: "Monthly Plan", icon: BookOpen },
-  "payroll-services": { gradient: "from-cyan-500 to-sky-500", bgGradient: "from-cyan-50 to-sky-50", borderColor: "border-cyan-200", tag: "HR Friendly", icon: Users },
-};
+const styleMap: Record<string, typeof STATIC_SERVICES[0]> = Object.fromEntries(STATIC_SERVICES.map(s => [s.slug, s]));
 
 export function ServicesSection() {
   const [services, setServices] = useState(STATIC_SERVICES);
 
   useEffect(() => {
-    api.get("/services")
-      .then((r) => {
-        if (r.data?.data?.length > 0) {
-          const merged = r.data.data.map((s: any) => ({
-            ...s,
-            desc: s.shortDescription || s.name,
-            ...(styleMap[s.slug] || styleMap["gst-filing"]),
-          }));
-          setServices(merged);
-        }
-      })
-      .catch(() => {});
+    api.get("/services").then((r) => {
+      if (r.data?.data?.length > 0) {
+        setServices(r.data.data.map((s: any) => ({ ...s, ...(styleMap[s.slug] || styleMap["gst-filing"]), desc: s.shortDescription || s.name })));
+      }
+    }).catch(() => {});
   }, []);
 
   return (
-    <section className="section-padding relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-50/50 to-background" />
+    <section className="section-padding relative overflow-hidden bg-white">
+      {/* Subtle top color wash */}
+      <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-slate-50 to-transparent pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 bg-brand-50 text-brand-600 border border-brand-200 rounded-full px-4 py-2 text-sm font-medium mb-4"
-          >
-            <Sparkles className="w-4 h-4" />
-            Comprehensive CA Services
+        <div className="text-center mb-14">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
+            className="inline-flex items-center gap-2 bg-brand-50 text-brand-600 border border-brand-100 rounded-full px-4 py-2 text-sm font-semibold mb-5">
+            <Sparkles className="w-4 h-4" /> Comprehensive CA Services
           </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-bold font-heading mb-4"
-          >
+          <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+            className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
             Everything Your Business Needs
           </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-muted-foreground max-w-2xl mx-auto"
-          >
-            From tax filing to company registration — comprehensive financial and legal services under one roof. Book a ₹499 consultation to get started.
+          <motion.p initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
+            className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            From tax filing to company registration — all services under one roof.
           </motion.p>
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {services.map((service, index) => {
             const Icon = service.icon;
             return (
-              <motion.div
-                key={service.slug}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05, duration: 0.4 }}
-              >
+              <motion.div key={service.slug}
+                initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: index * 0.04, duration: 0.4 }}>
                 <Link href={`/services/${service.slug}`} className="group block h-full">
-                  <div className={`h-full bg-gradient-to-br ${service.bgGradient} rounded-2xl p-5 border ${service.borderColor} hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 relative overflow-hidden`}>
+                  <div className={`h-full relative bg-white rounded-2xl p-5 border border-gray-100 hover:border-transparent hover:shadow-2xl ${service.glow} transition-all duration-300 hover:-translate-y-2 overflow-hidden`}>
+                    {/* Gradient background on hover via pseudo */}
+                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${service.gradient} opacity-0 group-hover:opacity-[0.06] transition-opacity duration-300`} />
+
                     {/* Tag */}
-                    <div className={`absolute top-3 right-3 text-[10px] font-semibold bg-gradient-to-r ${service.gradient} text-white px-2 py-0.5 rounded-full`}>
+                    <div className={`absolute top-3 right-3 text-[9px] font-bold bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent border border-gray-100 group-hover:border-transparent rounded-full px-2 py-0.5`}>
                       {service.tag}
                     </div>
 
                     {/* Icon */}
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                    <motion.div whileHover={{ rotate: 5, scale: 1.1 }}
+                      className={`relative w-12 h-12 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-4 shadow-lg`}>
                       <Icon className="w-5 h-5 text-white" />
-                    </div>
+                    </motion.div>
 
-                    {/* Content */}
-                    <h3 className="font-bold font-heading text-sm mb-2 pr-12">{service.name}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">{service.desc}</p>
+                    <h3 className="font-bold text-sm text-gray-900 mb-2 pr-10 leading-snug">{service.name}</h3>
+                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-4">{service.desc}</p>
 
-                    {/* Price + CTA */}
-                    <div className="flex items-center justify-between mt-auto">
-                      {service.showPrice !== false ? (
-                        <span className={`text-sm font-bold bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
-                          From {formatCurrency(service.basePrice)}
-                        </span>
-                      ) : (
-                        <span className="text-sm font-bold text-brand-600">Get a Quote</span>
-                      )}
-                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-brand-600 transition-all" />
+                    <div className="flex items-center text-xs font-semibold mt-auto">
+                      <span className={`bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>Learn more</span>
+                      <ArrowRight className="w-3 h-3 ml-1 text-gray-400 group-hover:translate-x-1 group-hover:text-gray-700 transition-all" />
                     </div>
                   </div>
                 </Link>
@@ -136,19 +94,22 @@ export function ServicesSection() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center mt-14">
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          className="text-center mt-14">
           <p className="text-muted-foreground mb-5 text-sm">Not sure which service you need? Start with a ₹499 consultation.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" className="rounded-xl bg-brand-600 hover:bg-brand-700 font-semibold" asChild>
-              <Link href="/services">
-                View All Services <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="rounded-xl border-2" asChild>
-              <Link href="/services">Book ₹499 Consultation</Link>
-            </Button>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+              <Button size="lg" className="rounded-xl bg-brand-600 hover:bg-brand-700 font-semibold shadow-lg shadow-brand-600/25" asChild>
+                <Link href="/services">View All Services <ArrowRight className="ml-2 w-4 h-4" /></Link>
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+              <Button size="lg" variant="outline" className="rounded-xl border-2" asChild>
+                <Link href="/services">Book ₹499 Consultation</Link>
+              </Button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
