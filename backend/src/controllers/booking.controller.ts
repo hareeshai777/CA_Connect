@@ -7,6 +7,7 @@ import { generateBookingNumber, generateOrderId } from "../utils/generateId";
 import { googleCalendarService } from "../services/googleCalendar.service";
 import { whatsappService } from "../services/whatsapp.service";
 import { sendEmail, emailTemplates } from "../services/email.service";
+import { logger } from "../utils/logger";
 import { format } from "date-fns";
 
 export const createBookingOrder = async (req: Request, res: Response) => {
@@ -119,38 +120,13 @@ export const confirmBooking = async (req: Request, res: Response) => {
 
   const clientUser = await prisma.user.findUnique({ where: { id: userId } });
 
-  let googleEventId = "";
-  let googleMeetLink = "";
-  let calendarEventUrl = "";
-
-  try {
-    const calEvent = await googleCalendarService.createEvent({
-      summary: `CA Consultation: ${service.name}`,
-      description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
-      startDateTime: scheduledAt.toISOString(),
-      endDateTime: endDateTime.toISOString(),
-      attendees: [
-        { email: clientUser?.email || "", displayName: `${client.firstName} ${client.lastName}` },
-        { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
-      ],
-    });
-    googleEventId = calEvent.eventId;
-    googleMeetLink = calEvent.meetLink;
-    calendarEventUrl = calEvent.eventUrl;
-  } catch {
-    googleMeetLink = `https://meet.google.com/new`;
-  }
-
+  // Create booking immediately with a fallback Meet link — don't block on Calendar API
   const booking = await prisma.$transaction(async (tx) => {
     await tx.timeSlot.update({ where: { id: slotId }, data: { isBooked: true } });
 
     await tx.payment.update({
       where: { razorpayOrderId },
-      data: {
-        razorpayPaymentId,
-        razorpaySignature,
-        status: "SUCCESS",
-      },
+      data: { razorpayPaymentId, razorpaySignature, status: "SUCCESS" },
     });
 
     const bk = await tx.booking.create({
@@ -162,63 +138,64 @@ export const confirmBooking = async (req: Request, res: Response) => {
         timeSlotId: slotId,
         status: "CONFIRMED",
         scheduledAt,
-        meetingLink: googleMeetLink,
-        googleEventId,
-        googleMeetLink,
-        calendarEventUrl,
+        meetingLink: `https://meet.google.com/new`,
+        googleMeetLink: `https://meet.google.com/new`,
         amount: ca.consultationFee,
         platformFee,
         caEarning,
       },
     });
 
-    await tx.payment.update({
-      where: { razorpayOrderId },
-      data: { bookingId: bk.id },
-    });
-
-    await tx.earning.create({
-      data: {
-        caProfessionalId: caId,
-        bookingId: bk.id,
-        amount: ca.consultationFee,
-        platformFee,
-        netAmount: caEarning,
-      },
-    });
-
-    await tx.cAProfessional.update({
-      where: { id: caId },
-      data: {
-        totalConsultations: { increment: 1 },
-        totalEarnings: { increment: caEarning },
-      },
-    });
+    await tx.payment.update({ where: { razorpayOrderId }, data: { bookingId: bk.id } });
+    await tx.earning.create({ data: { caProfessionalId: caId, bookingId: bk.id, amount: ca.consultationFee, platformFee, netAmount: caEarning } });
+    await tx.cAProfessional.update({ where: { id: caId }, data: { totalConsultations: { increment: 1 }, totalEarnings: { increment: caEarning } } });
 
     return bk;
   });
 
+  // Fire Calendar event creation in the background — updates booking with real Meet link
+  googleCalendarService.createEvent({
+    summary: `CA Consultation: ${service.name}`,
+    description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
+    startDateTime: scheduledAt.toISOString(),
+    endDateTime: endDateTime.toISOString(),
+    attendees: [
+      { email: clientUser?.email || "", displayName: `${client.firstName} ${client.lastName}` },
+      { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
+    ],
+  }).then((calEvent) => {
+    prisma.booking.update({
+      where: { id: booking.id },
+      data: {
+        meetingLink: calEvent.meetLink,
+        googleMeetLink: calEvent.meetLink,
+        googleEventId: calEvent.eventId,
+        calendarEventUrl: calEvent.eventUrl,
+        meetingCode: calEvent.meetingCode,
+      },
+    }).catch((err) => logger.error("Failed to update booking with Meet link", err));
+  }).catch((err) => logger.error("Calendar event creation failed", err));
+
+  // Fire notifications in the background
   const dateStr = format(scheduledAt, "dd MMM yyyy");
   const timeStr = `${slot.startTime} - ${slot.endTime}`;
-
   const msgData = {
     clientName: `${client.firstName} ${client.lastName}`,
     caName: `${ca.firstName} ${ca.lastName}`,
     service: service.name,
     date: dateStr,
     time: timeStr,
-    meetLink: googleMeetLink,
+    meetLink: `https://meet.google.com/new`,
     bookingNumber,
   };
-
-  await Promise.allSettled([
+  Promise.allSettled([
     sendEmail({ to: clientUser?.email || "", ...emailTemplates.bookingConfirmation(msgData) }),
     sendEmail({ to: ca.user.email, ...emailTemplates.bookingConfirmation({ ...msgData, clientName: ca.firstName + " " + ca.lastName }) }),
     clientUser?.phone && whatsappService.sendBookingConfirmation({ ...msgData, phone: clientUser.phone }),
     ca.user.phone && whatsappService.sendBookingConfirmation({ ...msgData, phone: ca.user.phone }),
-  ]);
+  ]).catch(() => {});
 
-  return sendSuccess(res, "Booking confirmed", { booking, meetLink: googleMeetLink }, 201);
+  return sendSuccess(res, "Booking confirmed", { booking, meetLink: booking.meetingLink }, 201);
 };
 
 // Direct booking (demo mode — no Razorpay required)
@@ -248,25 +225,9 @@ export const directBook = async (req: Request, res: Response) => {
   const caEarning = ca.consultationFee - platformFee;
   const clientUser = await prisma.user.findUnique({ where: { id: userId } });
 
-  let googleMeetLink = `https://meet.google.com/new`;
-  let meetingCode = "";
-  try {
-    const calEvent = await googleCalendarService.createEvent({
-      summary: `CA Consultation: ${service.name}`,
-      description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
-      startDateTime: scheduledAt.toISOString(),
-      endDateTime: endDateTime.toISOString(),
-      attendees: [
-        { email: clientUser?.email || "", displayName: `${client.firstName} ${client.lastName}` },
-        { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
-      ],
-    });
-    googleMeetLink = calEvent.meetLink || googleMeetLink;
-    meetingCode = calEvent.meetingCode || "";
-  } catch {}
-
   const orderId = generateOrderId();
 
+  // Create booking immediately — don't block on Calendar API
   const booking = await prisma.$transaction(async (tx) => {
     await tx.timeSlot.update({ where: { id: slotId }, data: { isBooked: true } });
 
@@ -293,9 +254,8 @@ export const directBook = async (req: Request, res: Response) => {
         status: "CONFIRMED",
         scheduledAt,
         duration: 45,
-        meetingLink: googleMeetLink,
-        googleMeetLink,
-        meetingCode,
+        meetingLink: `https://meet.google.com/new`,
+        googleMeetLink: `https://meet.google.com/new`,
         notes,
         amount: ca.consultationFee,
         platformFee,
@@ -304,20 +264,36 @@ export const directBook = async (req: Request, res: Response) => {
     });
 
     await tx.payment.update({ where: { id: payment.id }, data: { bookingId: bk.id } });
-
-    await tx.earning.create({
-      data: { caProfessionalId: caId, bookingId: bk.id, amount: ca.consultationFee, platformFee, netAmount: caEarning },
-    });
-
-    await tx.cAProfessional.update({
-      where: { id: caId },
-      data: { totalConsultations: { increment: 1 }, totalEarnings: { increment: caEarning } },
-    });
+    await tx.earning.create({ data: { caProfessionalId: caId, bookingId: bk.id, amount: ca.consultationFee, platformFee, netAmount: caEarning } });
+    await tx.cAProfessional.update({ where: { id: caId }, data: { totalConsultations: { increment: 1 }, totalEarnings: { increment: caEarning } } });
 
     return bk;
   });
 
-  return sendSuccess(res, "Booking confirmed!", { booking, meetLink: googleMeetLink }, 201);
+  // Fire Calendar event creation in the background
+  googleCalendarService.createEvent({
+    summary: `CA Consultation: ${service.name}`,
+    description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
+    startDateTime: scheduledAt.toISOString(),
+    endDateTime: endDateTime.toISOString(),
+    attendees: [
+      { email: clientUser?.email || "", displayName: `${client.firstName} ${client.lastName}` },
+      { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
+    ],
+  }).then((calEvent) => {
+    prisma.booking.update({
+      where: { id: booking.id },
+      data: {
+        meetingLink: calEvent.meetLink,
+        googleMeetLink: calEvent.meetLink,
+        googleEventId: calEvent.eventId,
+        calendarEventUrl: calEvent.eventUrl,
+        meetingCode: calEvent.meetingCode,
+      },
+    }).catch((err) => logger.error("Failed to update booking with Meet link", err));
+  }).catch((err) => logger.error("Calendar event creation failed (directBook)", err));
+
+  return sendSuccess(res, "Booking confirmed!", { booking, meetLink: booking.meetingLink }, 201);
 };
 
 export const getClientBookings = async (req: Request, res: Response) => {
