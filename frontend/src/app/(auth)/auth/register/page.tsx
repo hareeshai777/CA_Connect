@@ -187,12 +187,30 @@ function CARegister() {
   const [certUploading, setCertUploading] = useState(false);
   const certRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { setAuth, fetchMe } = useAuthStore();
+  const { user, setAuth, fetchMe } = useAuthStore();
 
-  const { register, handleSubmit, formState: { errors }, trigger } = useForm<CAForm>({
+  const { register, handleSubmit, formState: { errors }, trigger, reset } = useForm<CAForm>({
     resolver: zodResolver(caSchema),
     defaultValues: { experienceYears: 0 },
   });
+
+  const isLoggedInCA = !!user && user.role === "CA_PROFESSIONAL";
+
+  // If the user is already a logged-in CA without a completed CA profile,
+  // skip the account step and continue from the profile step.
+  useEffect(() => {
+  if (isLoggedInCA) {
+    setStep(2);
+    // Prefill whatever we can from the auth user
+    reset((prev) => ({
+    ...prev,
+    firstName: user.clientProfile?.firstName || user.caProfessional?.firstName || prev.firstName,
+    lastName: user.clientProfile?.lastName || user.caProfessional?.lastName || prev.lastName,
+    email: user.email || prev.email,
+    phone: user.phone || prev.phone,
+    }));
+  }
+  }, [isLoggedInCA, reset, user]);
 
   const nextStep = async (fields: (keyof CAForm)[]) => {
     const ok = await trigger(fields);
@@ -202,40 +220,58 @@ function CARegister() {
   const handleRegister = async (data: CAForm) => {
     setLoading(true);
     try {
-      let userId = "";
-      // Register or resume unverified account
-      try {
-        const userRes = await api.post("/auth/register", {
-          firstName: data.firstName, lastName: data.lastName,
-          email: data.email,
-          phone: data.phone?.replace(/[\s\-().]/g, "") || undefined,
-          password: data.password,
-          role: "CA_PROFESSIONAL",
-        });
-        userId = userRes.data.data.userId;
-      } catch (regErr: any) {
-        // 409 means email already verified — try to login directly
-        if (regErr?.response?.status !== 409) throw regErr;
+      if (isLoggedInCA) {
+        // Account already exists and user is authenticated as CA.
+        // Only (attempt to) create the CA professional profile.
+        try {
+          await api.post("/ca/register", {
+            firstName: data.firstName, lastName: data.lastName, bio: data.bio,
+            membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
+            consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
+          });
+        } catch (caErr: any) {
+          // 409 = profile already exists — that's fine, proceed
+          if (caErr?.response?.status !== 409) throw caErr;
+        }
+
+        await fetchMe();
+        setStep(3);
+      } else {
+        let userId = "";
+        // Register or resume unverified account
+        try {
+          const userRes = await api.post("/auth/register", {
+            firstName: data.firstName, lastName: data.lastName,
+            email: data.email,
+            phone: data.phone?.replace(/[\s\-().]/g, "") || undefined,
+            password: data.password,
+            role: "CA_PROFESSIONAL",
+          });
+          userId = userRes.data.data.userId;
+        } catch (regErr: any) {
+          // 409 means email already verified — try to login directly
+          if (regErr?.response?.status !== 409) throw regErr;
+        }
+
+        const loginRes = await api.post("/auth/login", { email: data.email, password: data.password });
+        const { accessToken, refreshToken, role } = loginRes.data.data;
+        setAuth({ id: userId, email: data.email, role, isEmailVerified: false }, accessToken, refreshToken);
+
+        // Create CA profile if it doesn't exist yet
+        try {
+          await api.post("/ca/register", {
+            firstName: data.firstName, lastName: data.lastName, bio: data.bio,
+            membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
+            consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
+          });
+        } catch (caErr: any) {
+          // 409 = profile already exists — that's fine, proceed
+          if (caErr?.response?.status !== 409) throw caErr;
+        }
+
+        await fetchMe();
+        setStep(3);
       }
-
-      const loginRes = await api.post("/auth/login", { email: data.email, password: data.password });
-      const { accessToken, refreshToken, role } = loginRes.data.data;
-      setAuth({ id: userId, email: data.email, role, isEmailVerified: false }, accessToken, refreshToken);
-
-      // Create CA profile if it doesn't exist yet
-      try {
-        await api.post("/ca/register", {
-          firstName: data.firstName, lastName: data.lastName, bio: data.bio,
-          membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
-          consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
-        });
-      } catch (caErr: any) {
-        // 409 = profile already exists — that's fine, proceed
-        if (caErr?.response?.status !== 409) throw caErr;
-      }
-
-      await fetchMe();
-      setStep(3);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setLoading(false); }
   };
