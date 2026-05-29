@@ -4,7 +4,7 @@ import { body } from "express-validator";
 import * as caController from "../controllers/ca.controller";
 import { authenticate, authorize } from "../middleware/auth";
 import { validate } from "../middleware/validate";
-import { upload } from "../middleware/upload";
+import { upload, uploadToCloudinary } from "../middleware/upload";
 
 const router = Router();
 
@@ -56,6 +56,24 @@ router.post(
   authorize("CA_PROFESSIONAL"),
   upload.single("avatar"),
   asyncHandler(caController.uploadAvatar)
+);
+
+// Upload CA professional certificate (called after registration)
+router.post(
+  "/upload/certificate",
+  authenticate,
+  authorize("CA_PROFESSIONAL"),
+  upload.single("certificate"),
+  asyncHandler(async (req, res) => {
+    const { prisma } = await import("../config/prisma");
+    const { sendSuccess, sendError } = await import("../utils/apiResponse");
+    if (!req.file?.buffer) return sendError(res, "No file uploaded", 400);
+    const ca = await prisma.cAProfessional.findUnique({ where: { userId: req.user!.userId } });
+    if (!ca) return sendError(res, "CA profile not found", 404);
+    const { url } = await uploadToCloudinary(req.file.buffer, "ca-connect/certificates", "raw");
+    await prisma.cAProfessional.update({ where: { id: ca.id }, data: { certificateUrl: url } });
+    return sendSuccess(res, "Certificate uploaded", { certificateUrl: url });
+  })
 );
 
 router.post(

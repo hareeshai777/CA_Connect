@@ -15,6 +15,24 @@ router.get("/cas", adminController.listAllCAs);
 router.put("/cas/:id/approve", adminController.approveCA);
 router.put("/cas/:id/reject", adminController.rejectCA);
 router.put("/cas/:id/suspend", adminController.suspendCA);
+// Activate (re-enable) a suspended/rejected CA
+router.put("/cas/:id/activate", asyncHandler(async (req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const ca = await prisma.cAProfessional.findUnique({ where: { id: req.params.id } });
+  if (!ca) return sendError(res, "CA not found", 404);
+  await prisma.cAProfessional.update({ where: { id: req.params.id }, data: { status: "ACTIVE", isAvailable: true } });
+  return sendSuccess(res, "CA activated");
+}));
+// Deactivate (disable) an active CA
+router.put("/cas/:id/deactivate", asyncHandler(async (req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const ca = await prisma.cAProfessional.findUnique({ where: { id: req.params.id } });
+  if (!ca) return sendError(res, "CA not found", 404);
+  await prisma.cAProfessional.update({ where: { id: req.params.id }, data: { status: "SUSPENDED", isAvailable: false } });
+  return sendSuccess(res, "CA deactivated");
+}));
 
 router.get("/users", adminController.listAllUsers);
 router.put("/users/:id/toggle", adminController.toggleUserStatus);
