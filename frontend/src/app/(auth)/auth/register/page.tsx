@@ -285,8 +285,9 @@ function CARegister() {
           if (caErr?.response?.status !== 409) throw caErr;
         }
 
-        await fetchMe();
+        // Move to next step immediately; refresh auth state in background.
         setStep(3);
+        fetchMe();
       } else {
         let userId = "";
         // Register or resume unverified account
@@ -320,8 +321,9 @@ function CARegister() {
           if (caErr?.response?.status !== 409) throw caErr;
         }
 
-        await fetchMe();
+        // Move to next step immediately; refresh auth state in background.
         setStep(3);
+        fetchMe();
       }
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setLoading(false); }
