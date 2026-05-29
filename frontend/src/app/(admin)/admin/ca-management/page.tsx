@@ -50,17 +50,23 @@ export default function CAManagementPage() {
         ...(search && { search }),
         ...(statusFilter !== "ALL" && { status: statusFilter }),
       });
-      const [res, pendingRes, incompleteRes] = await Promise.all([
+      const [res, pendingRes, incompleteRes] = await Promise.allSettled([
         api.get(`/admin/cas?${params}`),
         api.get("/admin/cas?status=PENDING_APPROVAL&limit=1"),
         api.get("/admin/cas/incomplete"),
       ]);
-      setCAs(res.data.data || []);
-      setTotal(res.data.meta?.total || 0);
-      setPendingCount(pendingRes.data.meta?.total || 0);
-      setIncomplete(incompleteRes.data.data || []);
-    } catch (err) {
-      toast.error(getErrorMessage(err));
+      if (res.status === "fulfilled") {
+        setCAs(res.value.data.data || []);
+        setTotal(res.value.data.meta?.total || 0);
+      }
+      if (pendingRes.status === "fulfilled") {
+        setPendingCount(pendingRes.value.data.meta?.total || 0);
+      }
+      if (incompleteRes.status === "fulfilled") {
+        setIncomplete(incompleteRes.value.data.data || []);
+      }
+    } catch {
+      // silent — partial failures handled via allSettled above
     } finally {
       setLoading(false);
     }
