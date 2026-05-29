@@ -38,7 +38,6 @@ const caSchema = z.object({
   password: z.string().min(8, "Min 8 chars").regex(/[A-Z]/, "Needs uppercase").regex(/[0-9]/, "Needs number"),
   membershipNumber: z.string().optional(),
   experienceYears: z.number().min(0).max(60),
-  consultationFee: z.number().min(29900),
   bio: z.string().min(50, "Min 50 characters"),
   city: z.string().min(2, "Required"),
   state: z.string().min(2, "Required"),
@@ -182,7 +181,7 @@ function CARegister() {
 
   const { register, handleSubmit, formState: { errors }, trigger } = useForm<CAForm>({
     resolver: zodResolver(caSchema),
-    defaultValues: { experienceYears: 0, consultationFee: 49900 },
+    defaultValues: { experienceYears: 0 },
   });
 
   const nextStep = async (fields: (keyof CAForm)[]) => {
@@ -208,7 +207,7 @@ function CARegister() {
       await api.post("/ca/register", {
         firstName: data.firstName, lastName: data.lastName, bio: data.bio,
         membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
-        consultationFee: data.consultationFee, city: data.city, state: data.state, languages: data.languages,
+        consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
       });
 
       setStep(3); // Go to certificate upload step
@@ -278,10 +277,7 @@ function CARegister() {
             <p className="text-gray-500 text-sm mb-5">Tell clients about your expertise</p>
             <div className="space-y-3">
               <div className="space-y-1.5"><Label className="text-sm font-semibold text-gray-700">ICAI Membership Number</Label><Input placeholder="ICAI-MH-2012-XXXXX" className="h-11 rounded-xl border-gray-200 bg-gray-50" {...register("membershipNumber")} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label className="text-sm font-semibold text-gray-700">Experience (Years)</Label><Input type="number" className="h-11 rounded-xl border-gray-200 bg-gray-50" {...register("experienceYears", { valueAsNumber: true })} /></div>
-                <div className="space-y-1.5"><Label className="text-sm font-semibold text-gray-700">Consultation Fee (₹)</Label><Input type="number" placeholder="499" className="h-11 rounded-xl border-gray-200 bg-gray-50" {...register("consultationFee", { valueAsNumber: true })} /></div>
-              </div>
+              <div className="space-y-1.5"><Label className="text-sm font-semibold text-gray-700">Experience (Years)</Label><Input type="number" className="h-11 rounded-xl border-gray-200 bg-gray-50" {...register("experienceYears", { valueAsNumber: true })} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5"><Label className="text-sm font-semibold text-gray-700">City</Label><Input placeholder="Mumbai" className="h-11 rounded-xl border-gray-200 bg-gray-50" {...register("city")} />{errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}</div>
                 <div className="space-y-1.5"><Label className="text-sm font-semibold text-gray-700">State</Label><Input placeholder="Maharashtra" className="h-11 rounded-xl border-gray-200 bg-gray-50" {...register("state")} /></div>
