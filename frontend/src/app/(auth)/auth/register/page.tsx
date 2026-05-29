@@ -190,10 +190,24 @@ function CARegister() {
   const router = useRouter();
   const { user, accessToken, hasHydrated, setAuth, fetchMe } = useAuthStore();
 
-  const { register, handleSubmit, formState: { errors }, trigger, reset } = useForm<CAForm>({
+  const { register, handleSubmit, formState: { errors }, trigger, reset, getValues } = useForm<CAForm>({
     resolver: zodResolver(caSchema),
     defaultValues: { experienceYears: 0 },
   });
+
+  const handleProfileContinue = async () => {
+    // Only validate step-2 fields; step-1 fields (password/email) may be absent when resuming.
+    const ok = await trigger([
+      "membershipNumber",
+      "experienceYears",
+      "bio",
+      "city",
+      "state",
+      "languages",
+    ]);
+    if (!ok) return;
+    await handleRegister(getValues());
+  };
 
   const isLoggedInCA = !!accessToken && !!user && user.role === "CA_PROFESSIONAL";
 
@@ -413,7 +427,7 @@ function CARegister() {
               <div className="flex gap-3">
                 <Button type="button" variant="outline" className="flex-1 h-11 rounded-xl" onClick={() => setStep(1)}>Back</Button>
                 <Button type="button" className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold" disabled={loading}
-                  onClick={handleSubmit(handleRegister)}>
+                  onClick={handleProfileContinue}>
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {loading ? "Saving..." : "Continue"}
                 </Button>
