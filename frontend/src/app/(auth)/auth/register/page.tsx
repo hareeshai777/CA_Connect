@@ -285,12 +285,19 @@ function CARegister() {
   const handleRegister = async (data: CAForm) => {
     setLoading(true);
     try {
+      const normalizedFirstName =
+        data.firstName?.trim() ||
+        (data.email?.split("@")[0]?.split(/[._-]/)[0]?.trim() || "CA");
+      const normalizedLastName =
+        data.lastName?.trim() ||
+        (data.email?.split("@")[0]?.split(/[._-]/)[1]?.trim() || "Professional");
+
       if (isLoggedInCA) {
         // Account already exists and user is authenticated as CA.
         // Only (attempt to) create the CA professional profile.
         try {
           await api.post("/ca/register", {
-            firstName: data.firstName, lastName: data.lastName, bio: data.bio,
+            firstName: normalizedFirstName, lastName: normalizedLastName, bio: data.bio,
             membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
             consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
           });
@@ -326,7 +333,7 @@ function CARegister() {
         // Create CA profile if it doesn't exist yet
         try {
           await api.post("/ca/register", {
-            firstName: data.firstName, lastName: data.lastName, bio: data.bio,
+            firstName: normalizedFirstName, lastName: normalizedLastName, bio: data.bio,
             membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
             consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
           });
