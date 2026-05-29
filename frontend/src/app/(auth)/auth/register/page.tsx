@@ -185,32 +185,83 @@ function CARegister() {
   const [loading, setLoading] = useState(false);
   const [certFile, setCertFile] = useState<File | null>(null);
   const [certUploading, setCertUploading] = useState(false);
+  const [resumeLoading, setResumeLoading] = useState(true);
   const certRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { user, setAuth, fetchMe } = useAuthStore();
+  const { user, accessToken, hasHydrated, setAuth, fetchMe } = useAuthStore();
 
   const { register, handleSubmit, formState: { errors }, trigger, reset } = useForm<CAForm>({
     resolver: zodResolver(caSchema),
     defaultValues: { experienceYears: 0 },
   });
 
-  const isLoggedInCA = !!user && user.role === "CA_PROFESSIONAL";
+  const isLoggedInCA = !!accessToken && !!user && user.role === "CA_PROFESSIONAL";
 
-  // If the user is already a logged-in CA without a completed CA profile,
-  // skip the account step and continue from the profile step.
+  // Resume onboarding when coming from "Incomplete profile" banner:
+  // - If logged in CA but no CA profile yet => step 2
+  // - If CA profile exists but certificate missing => step 3
+  // - If certificate exists => step 4
   useEffect(() => {
-  if (isLoggedInCA) {
-    setStep(2);
-    // Prefill whatever we can from the auth user
-    reset((prev) => ({
-    ...prev,
-    firstName: user.clientProfile?.firstName || user.caProfessional?.firstName || prev.firstName,
-    lastName: user.clientProfile?.lastName || user.caProfessional?.lastName || prev.lastName,
-    email: user.email || prev.email,
-    phone: user.phone || prev.phone,
-    }));
-  }
-  }, [isLoggedInCA, reset, user]);
+    if (!hasHydrated) return;
+
+    const run = async () => {
+      try {
+        if (!accessToken) {
+          setResumeLoading(false);
+          return;
+        }
+
+        // Ensure we have user info loaded
+        if (!user) {
+          await fetchMe();
+        }
+
+        // Re-read store-backed user (fetchMe updates it asynchronously)
+        const me = useAuthStore.getState().user;
+        if (!me || me.role !== "CA_PROFESSIONAL") {
+          setResumeLoading(false);
+          return;
+        }
+
+        // Prefill from auth user if possible (email/phone are most useful here)
+        reset((prev) => ({
+          ...prev,
+          email: me.email || prev.email,
+          phone: me.phone || prev.phone,
+          firstName: me.caProfessional?.firstName || prev.firstName,
+          lastName: me.caProfessional?.lastName || prev.lastName,
+        }));
+
+        // Try to load CA profile to decide which step to resume
+        try {
+          const r = await api.get("/ca/my/profile");
+          const caProfile = r.data.data;
+
+          reset((prev) => ({
+            ...prev,
+            firstName: caProfile?.firstName || prev.firstName,
+            lastName: caProfile?.lastName || prev.lastName,
+            membershipNumber: caProfile?.membershipNumber || prev.membershipNumber,
+            experienceYears: caProfile?.experienceYears ?? prev.experienceYears,
+            bio: caProfile?.bio || prev.bio,
+            city: caProfile?.city || prev.city,
+            state: caProfile?.state || prev.state,
+            languages: caProfile?.languages || prev.languages,
+          }));
+
+          if (caProfile?.certificateUrl) setStep(4);
+          else setStep(3);
+        } catch (err: any) {
+          // 404 => profile not created yet, resume at profile step
+          if (err?.response?.status === 404) setStep(2);
+        }
+      } finally {
+        setResumeLoading(false);
+      }
+    };
+
+    run();
+  }, [accessToken, fetchMe, hasHydrated, reset, user]);
 
   const nextStep = async (fields: (keyof CAForm)[]) => {
     const ok = await trigger(fields);
@@ -290,6 +341,14 @@ function CARegister() {
   };
 
   const skipCert = () => setStep(4);
+
+  if (resumeLoading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div>
