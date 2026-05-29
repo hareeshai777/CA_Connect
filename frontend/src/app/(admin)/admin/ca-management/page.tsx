@@ -34,6 +34,7 @@ export default function CAManagementPage() {
   const [cas, setCAs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+  const [incomplete, setIncomplete] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -49,13 +50,15 @@ export default function CAManagementPage() {
         ...(search && { search }),
         ...(statusFilter !== "ALL" && { status: statusFilter }),
       });
-      const [res, pendingRes] = await Promise.all([
+      const [res, pendingRes, incompleteRes] = await Promise.all([
         api.get(`/admin/cas?${params}`),
         api.get("/admin/cas?status=PENDING_APPROVAL&limit=1"),
+        api.get("/admin/cas/incomplete"),
       ]);
       setCAs(res.data.data || []);
       setTotal(res.data.meta?.total || 0);
       setPendingCount(pendingRes.data.meta?.total || 0);
+      setIncomplete(incompleteRes.data.data || []);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -156,6 +159,31 @@ export default function CAManagementPage() {
           ))}
         </div>
       </div>
+
+      {/* Incomplete CA registrations — User created but no CA profile */}
+      {incomplete.length > 0 && (
+        <div className="mb-5 bg-red-950/40 border border-red-800/50 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <p className="text-sm font-semibold text-red-300">
+              {incomplete.length} incomplete CA registration{incomplete.length > 1 ? "s" : ""} — profile not set up
+            </p>
+          </div>
+          <div className="space-y-2">
+            {incomplete.map((u) => (
+              <div key={u.id} className="flex items-center justify-between bg-red-950/30 border border-red-800/30 rounded-xl px-4 py-2.5">
+                <div>
+                  <p className="text-sm text-gray-200">{u.email}</p>
+                  <p className="text-xs text-gray-500">Registered {formatDate(u.createdAt)} · No CA profile created</p>
+                </div>
+                <span className="text-[10px] bg-red-800/40 text-red-300 border border-red-700/40 rounded-full px-2.5 py-1 font-semibold">
+                  Incomplete
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* CA List */}
       <div className="space-y-3">

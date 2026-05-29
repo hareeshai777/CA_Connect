@@ -177,7 +177,7 @@ function CARegister() {
   const [certUploading, setCertUploading] = useState(false);
   const certRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { setAuth, fetchMe } = useAuthStore();
 
   const { register, handleSubmit, formState: { errors }, trigger } = useForm<CAForm>({
     resolver: zodResolver(caSchema),
@@ -210,7 +210,9 @@ function CARegister() {
         consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
       });
 
-      setStep(3); // Go to certificate upload step
+      // Refresh user store so caProfessional profile is available immediately
+      await fetchMe();
+      setStep(3);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setLoading(false); }
   };

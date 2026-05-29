@@ -12,6 +12,18 @@ router.get("/dashboard", adminController.getDashboardStats);
 router.get("/analytics", adminController.getPlatformAnalytics);
 
 router.get("/cas", adminController.listAllCAs);
+
+// List Users with CA_PROFESSIONAL role who have no CAProfessional profile yet
+router.get("/cas/incomplete", asyncHandler(async (_req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess } = await import("../utils/apiResponse");
+  const users = await prisma.user.findMany({
+    where: { role: "CA_PROFESSIONAL", caProfessional: null },
+    select: { id: true, email: true, phone: true, createdAt: true, isActive: true },
+    orderBy: { createdAt: "desc" },
+  });
+  return sendSuccess(res, "Incomplete CA registrations", users);
+}));
 router.put("/cas/:id/approve", adminController.approveCA);
 router.put("/cas/:id/reject", adminController.rejectCA);
 router.put("/cas/:id/suspend", adminController.suspendCA);

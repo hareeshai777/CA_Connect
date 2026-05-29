@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Calendar, TrendingUp, Users, Star, ArrowRight, Clock, Video, BarChart3, IndianRupee, Award, FolderOpen } from "lucide-react";
+import { Calendar, TrendingUp, Users, Star, ArrowRight, Clock, Video, BarChart3, IndianRupee, Award, FolderOpen, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 
 export default function CADashboardPage() {
-  const { user } = useAuthStore();
+  const { user, fetchMe } = useAuthStore();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [openingCase, setOpeningCase] = useState<string | null>(null);
@@ -24,6 +24,13 @@ export default function CADashboardPage() {
       .then((r) => setStats(r.data.data))
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  // Re-load user if caProfessional profile hasn't been fetched yet
+  useEffect(() => {
+    if (!user?.caProfessional) {
+      fetchMe();
+    }
   }, []);
 
   const ca = user?.caProfessional;
@@ -75,7 +82,22 @@ export default function CADashboardPage() {
         </div>
       </div>
 
-      {ca?.status !== "ACTIVE" && (
+      {/* CA profile not created yet */}
+      {!ca && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-red-800">CA Profile Incomplete</p>
+            <p className="text-sm text-red-700 mb-3">Your account was created but your CA professional profile was not set up. Please complete it to get listed and accept bookings.</p>
+            <a href="/auth/register?tab=ca" className="inline-flex items-center gap-1.5 bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-red-700 transition-colors">
+              Complete Profile Setup <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* CA profile exists but pending approval */}
+      {ca && ca.status !== "ACTIVE" && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center gap-3">
           <Clock className="w-5 h-5 text-yellow-600 shrink-0" />
           <div>
