@@ -11,7 +11,6 @@ import {
 import { generateOTP, otpExpiresAt } from "../utils/otp";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import { sendEmail, emailTemplates } from "../services/email.service";
-import { AppError } from "../middleware/errorHandler";
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
@@ -31,10 +30,35 @@ const issueTokens = (user: { id: string; email: string; role: string }) => ({
 export const register = async (req: Request, res: Response) => {
   const { email, password, phone, firstName, lastName, role = "CLIENT" } = req.body;
 
-  const exists = await prisma.user.findFirst({
-    where: { OR: [{ email }, { phone: phone || undefined }] },
-  });
-  if (exists) return sendError(res, "Email or phone already registered", 409);
+  // Check if email already exists
+  const emailExists = await prisma.user.findUnique({ where: { email } });
+
+  if (emailExists) {
+    // Unverified account — resend OTP so user can complete registration
+    if (!emailExists.isEmailVerified) {
+      const otp = generateOTP();
+      await prisma.user.update({
+        where: { id: emailExists.id },
+        data: { otpCode: otp, otpExpiresAt: otpExpiresAt(10) },
+      });
+      // Ensure client profile exists
+      if (role === "CLIENT") {
+        const profile = await prisma.clientProfile.findUnique({ where: { userId: emailExists.id } });
+        if (!profile) {
+          await prisma.clientProfile.create({ data: { userId: emailExists.id, firstName, lastName } });
+        }
+      }
+      await sendEmail({ to: email, ...emailTemplates.otpVerification(otp, firstName) });
+      return sendSuccess(res, "OTP resent. Please verify your email.", { userId: emailExists.id }, 200);
+    }
+    return sendError(res, "Email already registered. Please sign in instead.", 409);
+  }
+
+  // Check phone uniqueness only if provided
+  if (phone) {
+    const phoneExists = await prisma.user.findFirst({ where: { phone } });
+    if (phoneExists) return sendError(res, "Phone number already registered.", 409);
+  }
 
   const passwordHash = await bcrypt.hash(password, 12);
   const otp = generateOTP();
@@ -42,7 +66,7 @@ export const register = async (req: Request, res: Response) => {
   const user = await prisma.user.create({
     data: {
       email,
-      phone,
+      phone: phone || null,
       passwordHash,
       role: role as any,
       otpCode: otp,

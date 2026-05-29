@@ -72,8 +72,18 @@ function ClientRegister() {
       setUserId(res.data.data.userId);
       setEmail(data.email);
       setStep("verify");
-      toast.success("Account created! Check your email for the OTP.");
-    } catch (err) { toast.error(getErrorMessage(err)); }
+      // 200 = OTP resent (account existed but unverified), 201 = new account
+      const isResent = res.status === 200;
+      toast.success(isResent ? "OTP resent! Check your email." : "Account created! Check your email for the OTP.");
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const msg = getErrorMessage(err);
+      if (status === 409) {
+        toast.error("This email is already registered and verified. Please sign in instead.");
+      } else {
+        toast.error(msg);
+      }
+    }
     finally { setLoading(false); }
   };
 
@@ -192,25 +202,38 @@ function CARegister() {
   const handleRegister = async (data: CAForm) => {
     setLoading(true);
     try {
-      const userRes = await api.post("/auth/register", {
-        firstName: data.firstName, lastName: data.lastName,
-        email: data.email,
-        phone: data.phone?.replace(/[\s\-().]/g, "") || undefined,
-        password: data.password,
-        role: "CA_PROFESSIONAL",
-      });
-      const newUserId = userRes.data.data.userId;
+      let userId = "";
+      // Register or resume unverified account
+      try {
+        const userRes = await api.post("/auth/register", {
+          firstName: data.firstName, lastName: data.lastName,
+          email: data.email,
+          phone: data.phone?.replace(/[\s\-().]/g, "") || undefined,
+          password: data.password,
+          role: "CA_PROFESSIONAL",
+        });
+        userId = userRes.data.data.userId;
+      } catch (regErr: any) {
+        // 409 means email already verified — try to login directly
+        if (regErr?.response?.status !== 409) throw regErr;
+      }
+
       const loginRes = await api.post("/auth/login", { email: data.email, password: data.password });
       const { accessToken, refreshToken, role } = loginRes.data.data;
-      setAuth({ id: newUserId, email: data.email, role, isEmailVerified: false }, accessToken, refreshToken);
+      setAuth({ id: userId, email: data.email, role, isEmailVerified: false }, accessToken, refreshToken);
 
-      await api.post("/ca/register", {
-        firstName: data.firstName, lastName: data.lastName, bio: data.bio,
-        membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
-        consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
-      });
+      // Create CA profile if it doesn't exist yet
+      try {
+        await api.post("/ca/register", {
+          firstName: data.firstName, lastName: data.lastName, bio: data.bio,
+          membershipNumber: data.membershipNumber, experienceYears: data.experienceYears,
+          consultationFee: 49900, city: data.city, state: data.state, languages: data.languages,
+        });
+      } catch (caErr: any) {
+        // 409 = profile already exists — that's fine, proceed
+        if (caErr?.response?.status !== 409) throw caErr;
+      }
 
-      // Refresh user store so caProfessional profile is available immediately
       await fetchMe();
       setStep(3);
     } catch (err) { toast.error(getErrorMessage(err)); }
