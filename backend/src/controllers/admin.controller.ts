@@ -125,8 +125,8 @@ export const approveCA = async (req: Request, res: Response) => {
   });
 
   if (!ca) return sendError(res, "CA not found", 404);
-  if (ca.status !== "PENDING_APPROVAL")
-    return sendError(res, "CA is not pending approval", 400);
+  if (!["PENDING_APPROVAL", "PENDING_PAYMENT"].includes(ca.status))
+    return sendError(res, "CA is not pending approval or payment", 400);
 
   await prisma.cAProfessional.update({
     where: { id },

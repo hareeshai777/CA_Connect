@@ -228,7 +228,7 @@ export default function CAManagementPage() {
 
                 {/* Action buttons */}
                 <div className="flex flex-wrap gap-2 shrink-0">
-                  {ca.status === "PENDING_APPROVAL" && (
+                  {(ca.status === "PENDING_APPROVAL" || ca.status === "PENDING_PAYMENT") && (
                     <>
                       <Button size="sm"
                         className="rounded-xl bg-green-600 hover:bg-green-700 text-white gap-1.5 font-semibold"

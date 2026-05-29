@@ -2,9 +2,6 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import { uploadToCloudinary } from "../middleware/upload";
-import { razorpay } from "../config/razorpay";
-import { env } from "../config/env";
-import { generateOrderId } from "../utils/generateId";
 
 export const registerCA = async (req: Request, res: Response) => {
   const {
@@ -32,12 +29,13 @@ export const registerCA = async (req: Request, res: Response) => {
       lastName,
       bio,
       membershipNumber,
-      experienceYears: parseInt(experienceYears),
-      consultationFee: parseInt(consultationFee),
+      experienceYears: parseInt(experienceYears) || 0,
+      consultationFee: parseInt(consultationFee) || 49900,
       city,
       state,
       languages,
-      status: "PENDING_PAYMENT",
+      // Always start at PENDING_APPROVAL — admin reviews before activating
+      status: "PENDING_APPROVAL",
     },
   });
 
@@ -50,49 +48,10 @@ export const registerCA = async (req: Request, res: Response) => {
     });
   }
 
-  // Demo mode: Razorpay not configured — skip payment and activate directly
-  if (!razorpay) {
-    await prisma.cAProfessional.update({
-      where: { id: ca.id },
-      data: { status: "PENDING_APPROVAL" },
-    });
-    return sendSuccess(res, "CA profile created. Account is under review.", {
-      caId: ca.id,
-      razorpayOrderId: null,
-      amount: env.CA_ONBOARDING_FEE,
-      currency: "INR",
-      key: null,
-      demoMode: true,
-    }, 201);
-  }
-
-  const orderId = generateOrderId();
-  const order = await razorpay.orders.create({
-    amount: env.CA_ONBOARDING_FEE,
-    currency: "INR",
-    receipt: orderId,
-    notes: { type: "CA_ONBOARDING", caId: ca.id },
-  });
-
-  await prisma.payment.create({
-    data: {
-      orderId,
-      razorpayOrderId: order.id,
-      amount: env.CA_ONBOARDING_FEE,
-      status: "PENDING",
-      type: "CA_ONBOARDING",
-      description: "CA Professional Onboarding Fee",
-      caProfessionalId: ca.id,
-    },
-  });
-
-  return sendSuccess(res, "CA profile created. Complete payment to activate.", {
+  // Registration complete — admin reviews and approves
+  return sendSuccess(res, "CA profile created. Account is under admin review.", {
     caId: ca.id,
-    razorpayOrderId: order.id,
-    amount: env.CA_ONBOARDING_FEE,
-    currency: "INR",
-    key: env.RAZORPAY_KEY_ID,
-    demoMode: false,
+    demoMode: true,
   }, 201);
 };
 
