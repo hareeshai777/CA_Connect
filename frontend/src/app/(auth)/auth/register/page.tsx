@@ -65,7 +65,11 @@ function ClientRegister() {
   const onSubmit = async (data: ClientForm) => {
     setLoading(true);
     try {
-      const res = await api.post("/auth/register", { ...data, role: "CLIENT" });
+      const res = await api.post("/auth/register", {
+        ...data,
+        phone: data.phone?.replace(/[\s\-().]/g, "") || undefined,
+        role: "CLIENT",
+      });
       setUserId(res.data.data.userId);
       setEmail(data.email);
       setStep("verify");
@@ -191,7 +195,9 @@ function CARegister() {
     try {
       const userRes = await api.post("/auth/register", {
         firstName: data.firstName, lastName: data.lastName,
-        email: data.email, phone: data.phone, password: data.password,
+        email: data.email,
+        phone: data.phone?.replace(/[\s\-().]/g, "") || undefined,
+        password: data.password,
         role: "CA_PROFESSIONAL",
       });
       const newUserId = userRes.data.data.userId;
@@ -378,8 +384,14 @@ function CARegister() {
 
 // ── Main page with tabs ───────────────────────────────────────────────────────
 
-export default function RegisterPage() {
-  const [tab, setTab] = useState<"client" | "ca">("client");
+function RegisterContent() {
+  // Read ?tab=ca from URL to pre-select CA tab (used by /ca/register redirect)
+  const [tab, setTab] = useState<"client" | "ca">(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("tab") === "ca" ? "ca" : "client";
+    }
+    return "client";
+  });
 
   return (
     <div>
@@ -430,4 +442,8 @@ export default function RegisterPage() {
       </p>
     </div>
   );
+}
+
+export default function RegisterPage() {
+  return <RegisterContent />;
 }

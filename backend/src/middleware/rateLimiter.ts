@@ -10,12 +10,12 @@ export const globalLimiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 30, // CA registration makes 2 calls (register + login) — raised from 10 to 30
   message: { success: false, message: "Too many auth attempts, please try again later." },
 });
 
 export const otpLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 3,
+  max: 10,
   message: { success: false, message: "Too many OTP requests." },
 });

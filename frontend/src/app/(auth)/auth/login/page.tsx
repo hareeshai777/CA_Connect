@@ -151,7 +151,7 @@ function LoginContent() {
         </p>
         <p className="text-center text-sm text-gray-500">
           Are you a CA professional?{" "}
-          <Link href="/ca/register" className="text-blue-600 font-semibold hover:underline">
+          <Link href="/auth/register" className="text-blue-600 font-semibold hover:underline">
             Register here
           </Link>
         </p>

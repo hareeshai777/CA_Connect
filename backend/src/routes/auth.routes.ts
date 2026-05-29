@@ -16,7 +16,7 @@ router.post(
     body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
     body("firstName").trim().notEmpty(),
     body("lastName").trim().notEmpty(),
-    body("phone").optional().isMobilePhone("en-IN"),
+    body("phone").optional().customSanitizer((v) => v?.replace(/[\s\-().]/g, "")).if(body("phone").exists()).isMobilePhone("any"),
     body("role").optional().isIn(["CLIENT", "CA_PROFESSIONAL"]),
   ],
   validate,
