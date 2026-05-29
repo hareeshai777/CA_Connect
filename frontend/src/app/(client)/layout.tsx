@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, FileText, CreditCard, User, MessageCircle, LogOut, Bell, Download, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Calendar, FileText, CreditCard, User, MessageCircle, LogOut, Bell, Download, HelpCircle, Loader2 } from "lucide-react";
 import { CALogo } from "@/components/ui/CALogo";
 import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
@@ -41,6 +41,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     logout();
     router.push("/");
   };
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   const profile = user?.clientProfile;
 

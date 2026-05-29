@@ -3,37 +3,27 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CACard } from "./CACard";
 import { api } from "@/lib/api";
 
-const DEMO_CAS = [
-  { id: "demo1", firstName: "Anil", lastName: "Kumar", bio: "Expert in corporate taxation, GST compliance, and international tax planning with 15+ years experience.", experienceYears: 15, consultationFee: 49900, averageRating: 4.9, totalReviews: 127, isAvailable: true, city: "Mumbai", state: "Maharashtra", languages: "English, Hindi, Marathi", specializations: [{ service: { name: "Income Tax", slug: "income-tax-filing" } }, { service: { name: "GST Filing", slug: "gst-filing" } }] },
-  { id: "demo2", firstName: "Priyanka", lastName: "Mehta", bio: "Startup ecosystem expert specializing in company registration, funding compliance, and SEBI regulations.", experienceYears: 10, consultationFee: 49900, averageRating: 4.8, totalReviews: 89, isAvailable: true, city: "Bangalore", state: "Karnataka", languages: "English, Hindi, Kannada", specializations: [{ service: { name: "Company Reg.", slug: "company-registration" } }, { service: { name: "Startup Consulting", slug: "startup-consulting" } }] },
-  { id: "demo3", firstName: "Vikram", lastName: "Singhania", bio: "Audit and compliance specialist with deep expertise in statutory audit, internal audit, and risk management.", experienceYears: 12, consultationFee: 49900, averageRating: 4.7, totalReviews: 64, isAvailable: false, city: "Delhi", state: "Delhi", languages: "English, Hindi, Punjabi", specializations: [{ service: { name: "Audit Services", slug: "audit-services" } }, { service: { name: "Compliance", slug: "business-compliance" } }] },
-  { id: "demo4", firstName: "Deepa", lastName: "Nair", bio: "Financial planning and wealth management expert helping individuals and families achieve their financial goals.", experienceYears: 8, consultationFee: 49900, averageRating: 4.9, totalReviews: 156, isAvailable: true, city: "Chennai", state: "Tamil Nadu", languages: "English, Tamil, Hindi", specializations: [{ service: { name: "Financial Planning", slug: "financial-planning" } }, { service: { name: "Income Tax", slug: "income-tax-filing" } }] },
-  { id: "demo5", firstName: "Sanjay", lastName: "Agarwal", bio: "GST specialist with expert knowledge of e-commerce taxation, supply chain compliance, and ITC optimization.", experienceYears: 7, consultationFee: 49900, averageRating: 4.8, totalReviews: 93, isAvailable: true, city: "Hyderabad", state: "Telangana", languages: "English, Hindi, Telugu", specializations: [{ service: { name: "GST Filing", slug: "gst-filing" } }, { service: { name: "Accounting", slug: "accounting-services" } }] },
-  { id: "demo6", firstName: "Kavitha", lastName: "Reddy", bio: "Payroll and HR compliance expert managing end-to-end payroll for SMEs and large organizations.", experienceYears: 9, consultationFee: 49900, averageRating: 4.6, totalReviews: 48, isAvailable: true, city: "Pune", state: "Maharashtra", languages: "English, Telugu, Hindi", specializations: [{ service: { name: "Payroll Services", slug: "payroll-services" } }, { service: { name: "Compliance", slug: "business-compliance" } }] },
-];
-
 export function FeaturedCAsSection() {
-  const [cas, setCas] = useState(DEMO_CAS);
+  const [cas, setCas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/ca?limit=6&sortBy=averageRating").then((res) => {
-      const realCAs: any[] = res.data?.data || [];
-      if (realCAs.length === 0) return;
-      const normalised = realCAs.map((ca: any) => ({ ...ca, consultationFee: 49900, _real: true }));
-      const realNames = new Set(normalised.map((c: any) => `${c.firstName}${c.lastName}`));
-      const fillers = DEMO_CAS.filter(d => !realNames.has(`${d.firstName}${d.lastName}`));
-      setCas([...normalised, ...fillers].slice(0, 6));
-    }).catch(() => {});
+    api.get("/ca?limit=6&sortBy=averageRating")
+      .then((res) => {
+        const real = (res.data?.data || []).filter((ca: any) => ca.status === "ACTIVE");
+        setCas(real.slice(0, 6).map((ca: any) => ({ ...ca, _real: true })));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (
     <section className="section-padding bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
@@ -61,28 +51,56 @@ export function FeaturedCAsSection() {
           </motion.div>
         </div>
 
-        {/* CA Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {cas.map((ca, index) => (
-            <CACard key={ca.id} ca={ca as any} index={index} />
-          ))}
-        </div>
-
-        {/* Bottom CTA bar */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="mt-12 bg-gradient-to-r from-brand-600 to-indigo-600 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-brand-600/20">
-          <div>
-            <p className="text-white font-bold text-xl mb-1">Can't find the right CA?</p>
-            <p className="text-brand-100 text-sm">Let our AI recommend the perfect expert for your needs.</p>
+        {/* Loading skeletons */}
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-2xl" />
+            ))}
           </div>
-          <div className="flex gap-3 shrink-0">
+        )}
+
+        {/* Real CA cards */}
+        {!loading && cas.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {cas.map((ca, index) => (
+              <CACard key={ca.id} ca={ca as any} index={index} />
+            ))}
+          </div>
+        )}
+
+        {/* Empty state — no CAs yet */}
+        {!loading && cas.length === 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="text-center py-20 bg-gradient-to-br from-brand-50 to-indigo-50 rounded-3xl border border-brand-100">
+            <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <Users className="w-8 h-8 text-brand-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">CAs Coming Soon</h3>
+            <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
+              We are onboarding verified CA professionals. Be the first to connect when they go live.
+            </p>
+            <Button className="rounded-xl bg-brand-600 hover:bg-brand-700 font-semibold" asChild>
+              <Link href="/auth/register?tab=ca">Join as CA Professional</Link>
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Bottom CTA */}
+        {!loading && cas.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="mt-12 bg-gradient-to-r from-brand-600 to-indigo-600 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-brand-600/20">
+            <div>
+              <p className="text-white font-bold text-xl mb-1">Can&apos;t find the right CA?</p>
+              <p className="text-brand-100 text-sm">Browse all verified CA professionals on the platform.</p>
+            </div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-              <Button className="bg-white text-brand-700 hover:bg-brand-50 rounded-xl font-bold shadow-lg h-11 px-6" asChild>
+              <Button className="bg-white text-brand-700 hover:bg-brand-50 rounded-xl font-bold shadow-lg h-11 px-6 shrink-0" asChild>
                 <Link href="/find-ca">Find My CA <ArrowRight className="ml-2 w-4 h-4" /></Link>
               </Button>
             </motion.div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
       </div>
     </section>
   );

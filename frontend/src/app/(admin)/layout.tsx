@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, UserCheck, BarChart3, Settings, LogOut, Bell, ShieldAlert, FileText, DollarSign, PackageOpen } from "lucide-react";
+import { LayoutDashboard, Users, UserCheck, BarChart3, Settings, LogOut, Bell, ShieldAlert, FileText, DollarSign, PackageOpen, Loader2 } from "lucide-react";
 import { CALogo } from "@/components/ui/CALogo";
 import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
@@ -37,6 +37,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     logout();
     router.push("/");
   };
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 flex">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, Calendar, Users, User, LogOut, Bell, FileText, TrendingUp, Clock, Settings, CheckSquare, FolderOpen } from "lucide-react";
@@ -41,6 +42,15 @@ export default function CALayout({ children }: { children: React.ReactNode }) {
     logout();
     router.push("/");
   };
+
+  // Show spinner while store is hydrating from localStorage
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   const ca = user?.caProfessional;
 

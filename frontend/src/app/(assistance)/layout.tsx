@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, CheckSquare, FileText, MessageSquare,
-  Bell, LogOut, Menu, ChevronRight, Settings, FolderOpen,
+  Bell, LogOut, Menu, ChevronRight, Settings, FolderOpen, Loader2,
 } from "lucide-react";
 import { CALogo } from "@/components/ui/CALogo";
 import { useAuthStore } from "@/store/authStore";
@@ -97,6 +97,14 @@ export default function AssistanceLayout({ children }: { children: React.ReactNo
       </div>
     </aside>
   );
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">

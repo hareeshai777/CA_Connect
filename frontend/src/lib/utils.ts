@@ -10,17 +10,22 @@ export const formatCurrency = (amount: number, currency = "INR") =>
     amount / 100
   );
 
+// All dates displayed in IST (UTC+5:30)
+const IST = "Asia/Kolkata";
+
 export const formatDate = (date: string | Date | null | undefined, opts?: Intl.DateTimeFormatOptions) => {
   if (!date) return "—";
   const d = new Date(date);
   if (isNaN(d.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-IN", opts || { dateStyle: "medium" }).format(d);
+  return new Intl.DateTimeFormat("en-IN", { timeZone: IST, ...(opts || { dateStyle: "medium" }) }).format(d);
 };
 
-export const formatDateTime = (date: string | Date) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(date)
-  );
+export const formatDateTime = (date: string | Date | null | undefined) => {
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-IN", { timeZone: IST, dateStyle: "medium", timeStyle: "short" }).format(d);
+};
 
 export const truncate = (str: string, n: number) =>
   str.length > n ? str.slice(0, n - 1) + "…" : str;
