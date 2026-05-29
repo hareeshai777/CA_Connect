@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Check, X, Pause, RefreshCw, FileText, ExternalLink, Play, AlertCircle } from "lucide-react";
+import { Search, Check, X, Pause, RefreshCw, FileText, ExternalLink, Play, AlertCircle, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ const statusVariants: Record<string, any> = {
 };
 
 const statusLabels: Record<string, string> = {
+  ALL: "All",
   ACTIVE: "Active",
   PENDING_APPROVAL: "Pending Review",
   PENDING_PAYMENT: "Pending Payment",
@@ -32,40 +33,64 @@ const statusLabels: Record<string, string> = {
 export default function CAManagementPage() {
   const [cas, setCAs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [page, setPage] = useState(1);
   const [actionId, setActionId] = useState<string | null>(null);
 
-  const fetchCAs = async () => {
-    setLoading(true);
+  const fetchCAs = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: "20", ...(search && { search }), ...(statusFilter !== "ALL" && { status: statusFilter }) });
-      const res = await api.get(`/admin/cas?${params}`);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: "20",
+        ...(search && { search }),
+        ...(statusFilter !== "ALL" && { status: statusFilter }),
+      });
+      const [res, pendingRes] = await Promise.all([
+        api.get(`/admin/cas?${params}`),
+        api.get("/admin/cas?status=PENDING_APPROVAL&limit=1"),
+      ]);
       setCAs(res.data.data || []);
       setTotal(res.data.meta?.total || 0);
-    } catch (err) { toast.error(getErrorMessage(err)); }
-    finally { setLoading(false); }
+      setPendingCount(pendingRes.data.meta?.total || 0);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Fetch on mount and when filters change
   useEffect(() => { fetchCAs(); }, [page, statusFilter]);
+
+  // Auto-refresh when the admin switches back to this tab
+  useEffect(() => {
+    const onFocus = () => fetchCAs(true);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [page, statusFilter, search]);
 
   const handleAction = async (id: string, action: string) => {
     setActionId(id + action);
     try {
       await api.put(`/admin/cas/${id}/${action}`);
       const labels: Record<string, string> = {
-        approve: "CA approved and activated",
+        approve: "CA approved and activated ✓",
         reject: "CA application rejected",
         suspend: "CA deactivated",
-        activate: "CA activated",
+        activate: "CA activated ✓",
         deactivate: "CA deactivated",
       };
       toast.success(labels[action] || "Done");
       fetchCAs();
-    } catch (err) { toast.error(getErrorMessage(err)); }
-    finally { setActionId(null); }
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActionId(null);
+    }
   };
 
   return (
@@ -73,26 +98,60 @@ export default function CAManagementPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-100">CA Management</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-100">CA Management</h1>
+            {pendingCount > 0 && (
+              <motion.div
+                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                className="flex items-center gap-1.5 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold px-2.5 py-1 rounded-full"
+              >
+                <Bell className="w-3 h-3" />
+                {pendingCount} pending review
+              </motion.div>
+            )}
+          </div>
           <p className="text-gray-400 mt-1">{total} CA professionals</p>
         </div>
-        <Button variant="outline" size="sm" className="border-gray-700 text-gray-300 hover:bg-gray-800" onClick={fetchCAs}>
-          <RefreshCw className="w-4 h-4 mr-1" />Refresh
-        </Button>
+        <div className="flex gap-2">
+          {pendingCount > 0 && (
+            <Button size="sm" className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold gap-1.5"
+              onClick={() => { setStatusFilter("PENDING_APPROVAL"); setPage(1); }}>
+              <Bell className="w-3.5 h-3.5" /> Review {pendingCount} Pending
+            </Button>
+          )}
+          <Button variant="outline" size="sm" className="border-gray-700 text-gray-300 hover:bg-gray-800 rounded-xl"
+            onClick={() => fetchCAs()}>
+            <RefreshCw className="w-4 h-4 mr-1" />Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-          <Input placeholder="Search by name or email..." className="pl-10 bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500 rounded-xl"
-            value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && fetchCAs()} />
+          <Input
+            placeholder="Search by name or email..."
+            className="pl-10 bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500 rounded-xl"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchCAs()}
+          />
         </div>
         <div className="flex gap-2 flex-wrap">
           {statusFilters.map((s) => (
             <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${statusFilter === s ? "bg-blue-600 border-blue-600 text-white" : "border-gray-700 text-gray-400 hover:border-gray-500"}`}>
-              {s === "ALL" ? "All" : statusLabels[s] || s}
+              className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors relative ${
+                statusFilter === s
+                  ? "bg-blue-600 border-blue-600 text-white"
+                  : "border-gray-700 text-gray-400 hover:border-gray-500"
+              }`}>
+              {statusLabels[s] || s}
+              {s === "PENDING_APPROVAL" && pendingCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-amber-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {pendingCount > 9 ? "9+" : pendingCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -101,13 +160,28 @@ export default function CAManagementPage() {
       {/* CA List */}
       <div className="space-y-3">
         {loading ? (
-          Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-28 bg-gray-900 animate-pulse rounded-2xl" />)
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 bg-gray-900 animate-pulse rounded-2xl" />
+          ))
         ) : cas.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">No CAs found</div>
+          <div className="text-center py-20 text-gray-500">
+            <AlertCircle className="w-10 h-10 mx-auto mb-3 text-gray-700" />
+            <p>No CAs found for this filter</p>
+            {statusFilter !== "ALL" && (
+              <button onClick={() => setStatusFilter("ALL")}
+                className="mt-2 text-sm text-blue-400 hover:underline">
+                View all CAs
+              </button>
+            )}
+          </div>
         ) : (
           cas.map((ca, i) => (
-            <motion.div key={ca.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-              className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+            <motion.div key={ca.id}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className={`bg-gray-900 border rounded-2xl p-5 ${
+                ca.status === "PENDING_APPROVAL" ? "border-amber-700/50" : "border-gray-800"
+              }`}>
               <div className="flex flex-col lg:flex-row lg:items-start gap-4">
 
                 {/* Avatar + Info */}
@@ -124,6 +198,11 @@ export default function CAManagementPage() {
                       <Badge variant={statusVariants[ca.status]} className="text-xs">
                         {statusLabels[ca.status] || ca.status}
                       </Badge>
+                      {ca.status === "PENDING_APPROVAL" && (
+                        <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full px-2 py-0.5 font-semibold animate-pulse">
+                          Awaiting your review
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-400">{ca.user?.email}</p>
                     <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-gray-500">
@@ -149,15 +228,16 @@ export default function CAManagementPage() {
 
                 {/* Action buttons */}
                 <div className="flex flex-wrap gap-2 shrink-0">
-                  {/* PENDING_APPROVAL → Approve or Reject */}
                   {ca.status === "PENDING_APPROVAL" && (
                     <>
-                      <Button size="sm" className="rounded-xl bg-green-600 hover:bg-green-700 text-white gap-1.5 font-semibold"
+                      <Button size="sm"
+                        className="rounded-xl bg-green-600 hover:bg-green-700 text-white gap-1.5 font-semibold"
                         disabled={actionId === ca.id + "approve"}
                         onClick={() => handleAction(ca.id, "approve")}>
                         <Check className="w-3.5 h-3.5" /> Approve
                       </Button>
-                      <Button size="sm" className="rounded-xl bg-red-600 hover:bg-red-700 text-white gap-1.5 font-semibold"
+                      <Button size="sm"
+                        className="rounded-xl bg-red-600 hover:bg-red-700 text-white gap-1.5 font-semibold"
                         disabled={actionId === ca.id + "reject"}
                         onClick={() => handleAction(ca.id, "reject")}>
                         <X className="w-3.5 h-3.5" /> Reject
@@ -165,18 +245,18 @@ export default function CAManagementPage() {
                     </>
                   )}
 
-                  {/* ACTIVE → Deactivate */}
                   {ca.status === "ACTIVE" && (
-                    <Button size="sm" variant="outline" className="rounded-xl border-orange-700 text-orange-400 hover:bg-orange-900/30 gap-1.5"
+                    <Button size="sm" variant="outline"
+                      className="rounded-xl border-orange-700 text-orange-400 hover:bg-orange-900/30 gap-1.5"
                       disabled={actionId === ca.id + "deactivate"}
                       onClick={() => handleAction(ca.id, "deactivate")}>
                       <Pause className="w-3.5 h-3.5" /> Deactivate
                     </Button>
                   )}
 
-                  {/* SUSPENDED or REJECTED → Activate */}
                   {(ca.status === "SUSPENDED" || ca.status === "REJECTED") && (
-                    <Button size="sm" className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white gap-1.5 font-semibold"
+                    <Button size="sm"
+                      className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white gap-1.5 font-semibold"
                       disabled={actionId === ca.id + "activate"}
                       onClick={() => handleAction(ca.id, "activate")}>
                       <Play className="w-3.5 h-3.5" /> Activate
@@ -194,8 +274,10 @@ export default function CAManagementPage() {
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-gray-400">Showing {cas.length} of {total}</p>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="rounded-xl border-gray-700 text-gray-300" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
-            <Button variant="outline" size="sm" className="rounded-xl border-gray-700 text-gray-300" disabled={cas.length < 20} onClick={() => setPage(p => p + 1)}>Next</Button>
+            <Button variant="outline" size="sm" className="rounded-xl border-gray-700 text-gray-300"
+              disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" className="rounded-xl border-gray-700 text-gray-300"
+              disabled={cas.length < 20} onClick={() => setPage(p => p + 1)}>Next</Button>
           </div>
         </div>
       )}
