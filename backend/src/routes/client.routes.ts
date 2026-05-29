@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate, authorize } from "../middleware/auth";
-import { upload } from "../middleware/upload";
+import { upload, uploadToCloudinary } from "../middleware/upload";
 
 const router = Router();
 
@@ -95,21 +95,28 @@ router.post("/documents", upload.single("document"), async (req, res) => {
     const { prisma } = await import("../config/prisma");
     const profile = await prisma.clientProfile.findUnique({ where: { userId: req.user!.userId } });
     if (!profile) return res.status(404).json({ success: false, message: "Profile not found" });
-    const fileUrl = (req.file as any)?.path || (req as any).fileUrl;
-    if (!fileUrl) return res.status(400).json({ success: false, message: "No file uploaded" });
+    if (!req.file?.buffer) return res.status(400).json({ success: false, message: "No file uploaded" });
+
+    // Upload buffer to Cloudinary (memory storage has no .path)
+    const { url: fileUrl } = await uploadToCloudinary(
+      req.file.buffer,
+      "ca-connect/documents",
+      req.file.mimetype.startsWith("image/") ? "image" : "raw"
+    );
+
     const doc = await prisma.document.create({
       data: {
         clientProfileId: profile.id,
-        name: req.file?.originalname || "document",
+        name: req.file.originalname || "document",
         fileUrl,
-        fileSize: req.file?.size,
+        fileSize: req.file.size,
         type: (req.body.type as any) || "CLIENT_DOCUMENT",
-        mimeType: req.file?.mimetype || "application/octet-stream",
+        mimeType: req.file.mimetype || "application/octet-stream",
       },
     });
     return res.status(201).json({ success: true, data: doc });
-  } catch {
-    return res.status(500).json({ success: false, message: "Failed to upload document" });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message || "Failed to upload document" });
   }
 });
 

@@ -22,6 +22,10 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
   return Date.now() > end.getTime();
 };
 
+// Returns true only for a real Google Meet room link (not the placeholder)
+const isRealMeetLink = (link: string | undefined | null) =>
+  !!link && link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new";
+
 export default function ClientBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,7 +196,7 @@ export default function ClientBookingsPage() {
                   <Badge variant={statusVariant[b.status]} className="text-xs">{b.status}</Badge>
                   <p className="text-sm font-semibold text-brand-600">{formatCurrency(b.amount)}</p>
                 </div>
-                {b.status === "CONFIRMED" && b.meetingLink && !b.clientJoinedAt && !isMeetingExpired(b.scheduledAt, b.duration) && (
+                {b.status === "CONFIRMED" && isRealMeetLink(b.meetingLink) && !b.clientJoinedAt && !isMeetingExpired(b.scheduledAt, b.duration) && (
                   <Button
                     size="sm"
                     className="rounded-xl bg-brand-600 hover:bg-brand-700 shrink-0"

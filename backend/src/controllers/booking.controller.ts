@@ -270,7 +270,26 @@ export const directBook = async (req: Request, res: Response) => {
     return bk;
   });
 
-  // Fire Calendar event creation in the background
+  // Send booking confirmation notifications immediately (with placeholder link)
+  const dateStr = format(scheduledAt, "dd MMM yyyy");
+  const timeStr = `${slot.startTime} - ${slot.endTime}`;
+  const notifData = {
+    clientName: `${client.firstName} ${client.lastName}`,
+    caName: `${ca.firstName} ${ca.lastName}`,
+    service: service.name,
+    date: dateStr,
+    time: timeStr,
+    meetLink: "Will be sent shortly via email once confirmed.",
+    bookingNumber: booking.bookingNumber,
+  };
+  Promise.allSettled([
+    sendEmail({ to: clientUser?.email || "", ...emailTemplates.bookingConfirmation(notifData) }),
+    sendEmail({ to: ca.user.email, ...emailTemplates.bookingConfirmation({ ...notifData, clientName: `${ca.firstName} ${ca.lastName}` }) }),
+    clientUser?.phone && whatsappService.sendBookingConfirmation({ ...notifData, phone: clientUser.phone }),
+    ca.user.phone && whatsappService.sendBookingConfirmation({ ...notifData, phone: ca.user.phone }),
+  ]).catch(() => {});
+
+  // Fire Calendar event creation in the background — sends real Meet link when ready
   googleCalendarService.createEvent({
     summary: `CA Consultation: ${service.name}`,
     description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
@@ -281,6 +300,7 @@ export const directBook = async (req: Request, res: Response) => {
       { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
     ],
   }).then((calEvent) => {
+    if (!calEvent.meetLink) return;
     prisma.booking.update({
       where: { id: booking.id },
       data: {
@@ -290,6 +310,21 @@ export const directBook = async (req: Request, res: Response) => {
         calendarEventUrl: calEvent.eventUrl,
         meetingCode: calEvent.meetingCode,
       },
+    }).then(() => {
+      // Send follow-up notification with the real Meet link
+      const meetingData = {
+        clientName: `${client.firstName} ${client.lastName}`,
+        caName: `${ca.firstName} ${ca.lastName}`,
+        service: service.name,
+        date: dateStr,
+        time: timeStr,
+        meetLink: calEvent.meetLink,
+        bookingNumber: booking.bookingNumber,
+      };
+      Promise.allSettled([
+        sendEmail({ to: clientUser?.email || "", ...emailTemplates.meetingDetails(meetingData) }),
+        clientUser?.phone && whatsappService.sendMeetingDetails({ ...meetingData, phone: clientUser.phone, name: meetingData.clientName }),
+      ]).catch(() => {});
     }).catch((err) => logger.error("Failed to update booking with Meet link", err));
   }).catch((err) => logger.error("Calendar event creation failed (directBook)", err));
 

@@ -25,6 +25,9 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
   return Date.now() > end.getTime();
 };
 
+const isRealMeetLink = (link: string | undefined | null) =>
+  !!link && link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new";
+
 export default function CABookingsPage() {
   const { user } = useAuthStore();
   const caId = user?.caProfessional?.id;
@@ -203,7 +206,7 @@ export default function CABookingsPage() {
 
                 <div className="flex gap-2 shrink-0 flex-wrap">
                   {/* Join Meet */}
-                  {b.status === "CONFIRMED" && b.meetingLink && !isMeetingExpired(b.scheduledAt, b.duration) && (
+                  {b.status === "CONFIRMED" && isRealMeetLink(b.meetingLink) && !isMeetingExpired(b.scheduledAt, b.duration) && (
                     <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" asChild>
                       <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
                         <Video className="mr-1.5 h-3.5 w-3.5" />Join Meet
@@ -211,7 +214,7 @@ export default function CABookingsPage() {
                     </Button>
                   )}
                   {/* Send Meeting Details */}
-                  {b.status === "CONFIRMED" && b.meetingLink && (
+                  {b.status === "CONFIRMED" && isRealMeetLink(b.meetingLink) && (
                     <Button
                       size="sm"
                       variant="outline"
