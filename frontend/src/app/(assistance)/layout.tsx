@@ -6,9 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, CheckSquare, FileText, MessageSquare,
-  Bell, LogOut, Menu, ChevronRight, Briefcase,
-  Settings, FolderOpen,
+  Bell, LogOut, Menu, ChevronRight, Settings, FolderOpen,
 } from "lucide-react";
+import { CALogo } from "@/components/ui/CALogo";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -56,15 +56,10 @@ export default function AssistanceLayout({ children }: { children: React.ReactNo
     )}>
       {/* Logo */}
       <div className="p-5 border-b border-border">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-md">
-            <Briefcase className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <span className="font-bold text-sm font-heading">CA<span className="text-emerald-600">Connect</span></span>
-            <p className="text-[10px] text-muted-foreground leading-none">Assistance Team</p>
-          </div>
-        </Link>
+        <div className="flex items-center gap-2">
+          <CALogo size={40} />
+          <p className="text-[10px] text-muted-foreground leading-none">Assistance Team</p>
+        </div>
       </div>
 
       {/* Nav */}

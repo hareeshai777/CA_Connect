@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, LayoutDashboard, Calendar, FileText, CreditCard, User, MessageCircle, LogOut, Bell, Download, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Calendar, FileText, CreditCard, User, MessageCircle, LogOut, Bell, Download, HelpCircle } from "lucide-react";
+import { CALogo } from "@/components/ui/CALogo";
 import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,12 +49,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-border fixed inset-y-0 left-0 z-40 flex flex-col hidden md:flex">
         <div className="p-6 border-b border-border">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-brand-600 to-brand-800 rounded-lg flex items-center justify-center">
-              <Briefcase className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold font-heading">CA<span className="text-brand-600">Connect</span></span>
-          </Link>
+          <CALogo size={40} />
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">

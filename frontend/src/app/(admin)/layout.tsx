@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Briefcase, LayoutDashboard, Users, UserCheck, BarChart3, Settings, LogOut, Bell, ShieldAlert, FileText, DollarSign, PackageOpen } from "lucide-react";
+import { LayoutDashboard, Users, UserCheck, BarChart3, Settings, LogOut, Bell, ShieldAlert, FileText, DollarSign, PackageOpen } from "lucide-react";
+import { CALogo } from "@/components/ui/CALogo";
 import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -42,12 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="w-64 bg-gray-900 border-r border-gray-800 fixed inset-y-0 left-0 z-40 flex flex-col">
         <div className="p-6 border-b border-gray-800">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-              <Briefcase className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold font-heading text-white">CA<span className="text-brand-400">Connect</span></span>
-          </Link>
+          <CALogo size={40} />
           <div className="mt-2 flex items-center gap-1.5">
             <ShieldAlert className="w-3.5 h-3.5 text-gold-400" />
             <span className="text-xs text-gold-400 font-medium">Super Admin</span>
