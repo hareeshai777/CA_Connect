@@ -4,7 +4,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 export const api = axios.create({
   baseURL: API_BASE,
-  timeout: 30000,
+  timeout: 35000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -24,22 +24,39 @@ api.interceptors.response.use(
     // Don't attempt token refresh for auth endpoints themselves
     const isAuthEndpoint = originalRequest.url?.includes("/auth/");
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    const status = error.response?.status;
+    const message = (error.response?.data as any)?.message || "";
+
+    // 403 "Account is deactivated" → clear and redirect to login
+    if (status === 403 && message.toLowerCase().includes("deactivated")) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/auth/login";
+      return Promise.reject(error);
+    }
+
+    // 401 → try to refresh token once
+    if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         if (!refreshToken) throw new Error("No refresh token");
 
-        const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
+        const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken }, { timeout: 15000 });
         localStorage.setItem("accessToken", data.data.accessToken);
         localStorage.setItem("refreshToken", data.data.refreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
         return api(originalRequest);
-      } catch {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        window.location.href = "/auth/login";
+      } catch (refreshErr: any) {
+        // Only clear tokens and redirect on actual auth failure, not network errors
+        const refreshStatus = refreshErr?.response?.status;
+        if (refreshStatus === 401 || refreshStatus === 403) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          window.location.href = "/auth/login";
+        }
+        // On network error: keep tokens, let the user retry
       }
     }
 

@@ -21,19 +21,29 @@ export const authenticate = async (
     return sendError(res, "No token provided", 401);
   }
   const token = authHeader.split(" ")[1];
+
+  let payload: ReturnType<typeof verifyAccessToken>;
   try {
-    const payload = verifyAccessToken(token);
+    payload = verifyAccessToken(token);
+  } catch {
+    return sendError(res, "Invalid or expired token", 401);
+  }
+
+  try {
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: { id: true, isActive: true, role: true },
     });
-    if (!user || !user.isActive) {
-      return sendError(res, "Account not found or deactivated", 401);
-    }
-    req.user = { ...payload, isActive: user.isActive };
+    if (!user) return sendError(res, "User not found", 401);
+    if (!user.isActive) return sendError(res, "Account is deactivated — contact support", 401);
+
+    // Use the DB role (authoritative) rather than the stale JWT role
+    req.user = { ...payload, role: user.role, isActive: user.isActive };
     next();
-  } catch {
-    return sendError(res, "Invalid or expired token", 401);
+  } catch (dbErr) {
+    // DB unavailable (cold start, etc.) — fall back to JWT-only auth so dashboards stay usable
+    req.user = { ...payload, isActive: true };
+    next();
   }
 };
 
