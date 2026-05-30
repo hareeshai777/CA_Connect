@@ -18,7 +18,10 @@ const statusVariant: Record<string, any> = {
 };
 
 const isRealMeetLink = (link?: string | null) =>
-  !!link && link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new";
+  !!link && (
+    (link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new") ||
+    link.startsWith("https://meet.jit.si/")
+  );
 
 function MeetingStatusBadge({ booking }: { booking: any }) {
   if (booking.status === "CANCELLED") return null;
@@ -29,7 +32,7 @@ function MeetingStatusBadge({ booking }: { booking: any }) {
     if (isRealMeetLink(booking.meetingLink)) {
       return <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />Meeting Ready</span>;
     }
-    return <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full px-2 py-0.5 font-medium">🔗 Link Pending</span>;
+    return <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full px-2 py-0.5 font-medium">✅ Meeting Scheduled</span>;
   }
   return null;
 }
@@ -53,6 +56,18 @@ export default function ClientDashboardPage() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Auto-fix stuck bookings with old placeholder link
+  useEffect(() => {
+    bookings.filter(b => b.status === "CONFIRMED" && b.meetingLink === "https://meet.google.com/new")
+      .forEach(b => {
+        api.post(`/bookings/${b.id}/regenerate-link`)
+          .then(res => {
+            const newLink = res.data.data?.meetingLink;
+            if (newLink) setBookings(prev => prev.map(bk => bk.id === b.id ? { ...bk, meetingLink: newLink } : bk));
+          }).catch(() => {});
+      });
+  }, [bookings]);
 
   const handleJoin = async (bookingId: string) => {
     setJoiningId(bookingId);

@@ -14,7 +14,10 @@ import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 
 const isRealMeetLink = (link?: string | null) =>
-  !!link && link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new";
+  !!link && (
+    (link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new") ||
+    link.startsWith("https://meet.jit.si/")
+  );
 
 export default function CADashboardPage() {
   const { user, fetchMe } = useAuthStore();

@@ -138,8 +138,8 @@ export const confirmBooking = async (req: Request, res: Response) => {
         timeSlotId: slotId,
         status: "CONFIRMED",
         scheduledAt,
-        meetingLink: `https://meet.google.com/new`,
-        googleMeetLink: `https://meet.google.com/new`,
+        meetingLink: `https://meet.jit.si/CAConnect-${bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`,
+        googleMeetLink: `https://meet.jit.si/CAConnect-${bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`,
         amount: ca.consultationFee,
         platformFee,
         caEarning,
@@ -244,6 +244,11 @@ export const directBook = async (req: Request, res: Response) => {
       },
     });
 
+    // Generate a guaranteed Jitsi Meet room immediately (no API needed)
+    // Format: https://meet.jit.si/CAConnect-{last10charsOfOrderId}
+    const jitsiRoom = `CAConnect-${orderId.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
+    const instantMeetLink = `https://meet.jit.si/${jitsiRoom}`;
+
     const bk = await tx.booking.create({
       data: {
         bookingNumber,
@@ -254,8 +259,8 @@ export const directBook = async (req: Request, res: Response) => {
         status: "CONFIRMED",
         scheduledAt,
         duration: 45,
-        meetingLink: `https://meet.google.com/new`,
-        googleMeetLink: `https://meet.google.com/new`,
+        meetingLink: instantMeetLink,
+        googleMeetLink: instantMeetLink,
         notes,
         amount: ca.consultationFee,
         platformFee,
@@ -279,7 +284,7 @@ export const directBook = async (req: Request, res: Response) => {
     service: service.name,
     date: dateStr,
     time: timeStr,
-    meetLink: "Will be sent shortly via email once confirmed.",
+    meetLink: booking.meetingLink || "", // Real Jitsi link available immediately
     bookingNumber: booking.bookingNumber,
   };
   Promise.allSettled([

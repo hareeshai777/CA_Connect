@@ -50,6 +50,33 @@ router.post(
 router.get("/my", authenticate, bookingController.getClientBookings);
 router.get("/ca", authenticate, authorize("CA_PROFESSIONAL"), bookingController.getCABookings);
 
+// Regenerate/fix meeting link for a booking (CA or client)
+router.post("/:id/regenerate-link", authenticate, asyncHandler(async (req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const userId = req.user!.userId;
+  const booking = await prisma.booking.findUnique({
+    where: { id: req.params.id },
+    include: {
+      clientProfile: { include: { user: { select: { id: true } } } },
+      caProfessional: { include: { user: { select: { id: true } } } },
+    },
+  });
+  if (!booking) return sendError(res, "Booking not found", 404);
+  const isOwner = booking.clientProfile.user.id === userId || booking.caProfessional.user.id === userId;
+  if (!isOwner) return sendError(res, "Unauthorized", 403);
+
+  // Generate a reliable Jitsi Meet link based on booking ID
+  const room = `CAConnect-${booking.bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
+  const meetLink = `https://meet.jit.si/${room}`;
+
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { meetingLink: meetLink, googleMeetLink: meetLink },
+  });
+  return sendSuccess(res, "Meeting link generated", { meetingLink: meetLink });
+}));
+
 // Client joins meeting — records timestamp, hides link on re-load
 router.post("/:id/join", authenticate, authorize("CLIENT"), asyncHandler(async (req, res) => {
   const { prisma } = await import("../config/prisma");

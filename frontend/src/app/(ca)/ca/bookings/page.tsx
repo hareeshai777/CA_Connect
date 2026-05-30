@@ -26,7 +26,10 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
 };
 
 const isRealMeetLink = (link: string | undefined | null) =>
-  !!link && link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new";
+  !!link && (
+    (link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new") ||
+    link.startsWith("https://meet.jit.si/")
+  );
 
 export default function CABookingsPage() {
   const { user } = useAuthStore();
@@ -213,7 +216,7 @@ export default function CABookingsPage() {
                     <div className="mt-1.5">
                       {isRealMeetLink(b.meetingLink)
                         ? <span className="inline-flex items-center gap-1 text-[10px] bg-green-900/20 text-green-400 border border-green-700/40 rounded-full px-2 py-0.5 font-medium"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />Meeting Ready</span>
-                        : <span className="inline-flex items-center gap-1 text-[10px] bg-yellow-900/20 text-yellow-400 border border-yellow-700/40 rounded-full px-2 py-0.5 font-medium">🔗 Link Pending</span>
+                        : <span className="inline-flex items-center gap-1 text-[10px] bg-yellow-900/20 text-yellow-400 border border-yellow-700/40 rounded-full px-2 py-0.5 font-medium">✅ Meeting Scheduled</span>
                       }
                     </div>
                   )}

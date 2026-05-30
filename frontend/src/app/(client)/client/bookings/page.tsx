@@ -24,7 +24,10 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
 
 // Returns true only for a real Google Meet room link (not the placeholder)
 const isRealMeetLink = (link: string | undefined | null) =>
-  !!link && link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new";
+  !!link && (
+    (link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new") ||
+    link.startsWith("https://meet.jit.si/")
+  );
 
 export default function ClientBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -75,6 +78,21 @@ export default function ClientBookingsPage() {
     fetchBookings();
     return () => abortRef.current?.abort();
   }, [page, status]);
+
+  // Auto-fix stuck bookings (old placeholder) by regenerating Jitsi link
+  useEffect(() => {
+    const stuckBookings = bookings.filter(
+      b => b.status === "CONFIRMED" && b.meetingLink === "https://meet.google.com/new"
+    );
+    stuckBookings.forEach(b => {
+      api.post(`/bookings/${b.id}/regenerate-link`)
+        .then(res => {
+          const newLink = res.data.data?.meetingLink;
+          if (newLink) setBookings(prev => prev.map(bk => bk.id === b.id ? { ...bk, meetingLink: newLink } : bk));
+        })
+        .catch(() => {});
+    });
+  }, [bookings]);
 
   const handleJoin = async (bookingId: string) => {
     setJoiningId(bookingId);
@@ -199,7 +217,7 @@ export default function ClientBookingsPage() {
                     <div className="mt-1.5">
                       {isRealMeetLink(b.meetingLink)
                         ? <span className="inline-flex items-center gap-1 text-[10px] bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />Meeting Ready</span>
-                        : <span className="inline-flex items-center gap-1 text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full px-2 py-0.5 font-medium">🔗 Meeting Link Pending</span>
+                        : <span className="inline-flex items-center gap-1 text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full px-2 py-0.5 font-medium">✅ Meeting Scheduled</span>
                       }
                     </div>
                   )}
