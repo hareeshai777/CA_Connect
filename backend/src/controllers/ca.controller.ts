@@ -22,6 +22,12 @@ export const registerCA = async (req: Request, res: Response) => {
   const existing = await prisma.cAProfessional.findUnique({ where: { userId } });
   if (existing) return sendError(res, "CA profile already exists", 409);
 
+  // Upgrade user role to CA_PROFESSIONAL if they registered as CLIENT first
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (user && user.role !== "CA_PROFESSIONAL") {
+    await prisma.user.update({ where: { id: userId }, data: { role: "CA_PROFESSIONAL" } });
+  }
+
   const ca = await prisma.cAProfessional.create({
     data: {
       userId,

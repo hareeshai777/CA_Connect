@@ -13,16 +13,27 @@ router.get("/", caController.listCAs);
 router.post(
   "/register",
   authenticate,
-  authorize("CA_PROFESSIONAL"),
+  // Allow any authenticated user — the controller upgrades role to CA_PROFESSIONAL
   [
     body("firstName").trim().notEmpty(),
     body("lastName").trim().notEmpty(),
-    body("consultationFee").isInt({ min: 0 }),
+    body("consultationFee").isInt({ min: 0 }).optional(),
     body("experienceYears").isInt({ min: 0 }),
   ],
   validate,
   asyncHandler(caController.registerCA)
 );
+
+// Fix role for users who registered as CLIENT but have a CA profile
+router.post("/fix-role", authenticate, asyncHandler(async (req, res) => {
+  const { prisma } = await import("../config/prisma");
+  const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const userId = req.user!.userId;
+  const caProfile = await prisma.cAProfessional.findUnique({ where: { userId } });
+  if (!caProfile) return sendError(res, "No CA profile found for this account", 404);
+  await prisma.user.update({ where: { id: userId }, data: { role: "CA_PROFESSIONAL" } });
+  return sendSuccess(res, "Role updated to CA_PROFESSIONAL. Please log out and log in again.");
+}));
 
 router.put("/profile", authenticate, authorize("CA_PROFESSIONAL"), caController.updateCAProfile);
 router.get("/my/profile", authenticate, authorize("CA_PROFESSIONAL"), caController.getMyCAProfile);

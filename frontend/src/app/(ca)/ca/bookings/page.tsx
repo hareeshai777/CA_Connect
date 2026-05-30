@@ -64,6 +64,15 @@ export default function CABookingsPage() {
       setTotal(res.data.meta?.total || 0);
     } catch (err: any) {
       if (err?.code === "ERR_CANCELED") return;
+      // 403 = role mismatch — try to auto-fix then retry
+      if (err?.response?.status === 403 && retryCount === 0) {
+        try {
+          await api.post("/ca/fix-role");
+          toast.info("Role updated — please log out and sign in again for full access.");
+        } catch { /* ignore fix-role errors */ }
+        setTimeout(() => fetchBookings(1), 1500);
+        return;
+      }
       if (retryCount < 1) { setTimeout(() => fetchBookings(retryCount + 1), 2000); return; }
       setBookings([]);
       const msg = getErrorMessage(err) || "Failed to load bookings";
