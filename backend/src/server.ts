@@ -29,6 +29,7 @@ import assistanceRoutes from "./routes/assistance.routes";
 import commissionRoutes from "./routes/commission.routes";
 import caseRoutes from "./routes/case.routes";
 import clientRoutes from "./routes/client.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 import { startNotificationCron } from "./services/notification.service";
 import { startMeetingMonitor } from "./jobs/meetingMonitor";
@@ -107,6 +108,7 @@ app.use("/api/assistance", assistanceRoutes);
 app.use("/api/commissions", commissionRoutes);
 app.use("/api/cases", caseRoutes);
 app.use("/api/client", clientRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

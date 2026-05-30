@@ -3,6 +3,8 @@ import { Router } from "express";
 import { body } from "express-validator";
 import * as bookingController from "../controllers/booking.controller";
 import { authenticate, authorize } from "../middleware/auth";
+import { createNotification } from "../utils/notify";
+import { NotificationType, NotificationChannel } from "@prisma/client";
 import { format } from "date-fns";
 import { validate } from "../middleware/validate";
 
@@ -255,7 +257,7 @@ router.post("/:id/send-meeting-details", authenticate, authorize("CA_PROFESSIONA
   const booking = await prisma.booking.findFirst({
     where: { id: req.params.id, caProfessionalId: ca.id },
     include: {
-      clientProfile: { include: { user: { select: { email: true, phone: true } } } },
+      clientProfile: { include: { user: { select: { id: true, email: true, phone: true } } } },
       caProfessional: true,
       service: { select: { name: true } },
       timeSlot: true,
@@ -287,6 +289,16 @@ router.post("/:id/send-meeting-details", authenticate, authorize("CA_PROFESSIONA
 
   const emailSent = results[0].status === "fulfilled";
   const whatsappSent = results[1].status === "fulfilled";
+
+  // Create in-app notification for client
+  await createNotification({
+    userId: booking.clientProfile.user.id,
+    title: "📅 Meeting Reminder from your CA",
+    body: `CA ${caName} has shared your meeting details for ${notifData.service}.\nDate: ${notifData.date} | Time: ${notifData.time}\nJoin: ${notifData.meetLink}`,
+    type: NotificationType.MEETING_LINK,
+    bookingId: booking.id,
+    metadata: { meetLink: notifData.meetLink, date: notifData.date, time: notifData.time },
+  });
 
   return sendSuccess(res, "Meeting details sent", { emailSent, whatsappSent });
 }));

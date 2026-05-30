@@ -9,6 +9,7 @@ import { whatsappService } from "../services/whatsapp.service";
 import { sendEmail, emailTemplates } from "../services/email.service";
 import { logger } from "../utils/logger";
 import { format } from "date-fns";
+import { notifyMeetingConfirmed } from "../utils/notify";
 
 export const createBookingOrder = async (req: Request, res: Response) => {
   const { caId, serviceId, slotId } = req.body;
@@ -207,7 +208,7 @@ export const directBook = async (req: Request, res: Response) => {
   if (!client) return sendError(res, "Client profile not found. Please complete your profile first.", 404);
 
   const [ca, service, slot] = await Promise.all([
-    prisma.cAProfessional.findUnique({ where: { id: caId }, include: { user: { select: { email: true, phone: true } } } }),
+    prisma.cAProfessional.findUnique({ where: { id: caId }, include: { user: { select: { id: true, email: true, phone: true } } } }),
     prisma.service.findUnique({ where: { id: serviceId } }),
     prisma.timeSlot.findUnique({ where: { id: slotId } }),
   ]);
@@ -287,6 +288,17 @@ export const directBook = async (req: Request, res: Response) => {
     meetLink: booking.meetingLink || "", // Real Jitsi link available immediately
     bookingNumber: booking.bookingNumber,
   };
+  // Create in-app notifications immediately
+  notifyMeetingConfirmed(userId, ca.user.id, {
+    bookingId: booking.id,
+    clientName: notifData.clientName,
+    caName: notifData.caName,
+    service: notifData.service,
+    date: notifData.date,
+    time: notifData.time,
+    meetLink: notifData.meetLink,
+  });
+
   Promise.allSettled([
     sendEmail({ to: clientUser?.email || "", ...emailTemplates.bookingConfirmation(notifData) }),
     sendEmail({ to: ca.user.email, ...emailTemplates.bookingConfirmation({ ...notifData, clientName: `${ca.firstName} ${ca.lastName}` }) }),
@@ -340,8 +352,19 @@ export const getClientBookings = async (req: Request, res: Response) => {
   const userId = req.user!.userId;
   const { status, page = "1", limit = "10" } = req.query as Record<string, string>;
 
-  const client = await prisma.clientProfile.findUnique({ where: { userId } });
-  if (!client) return sendError(res, "Client not found", 404);
+  let client = await prisma.clientProfile.findUnique({ where: { userId } });
+  // Auto-create profile if missing (handles accounts registered without completing profile)
+  if (!client) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+    const nameParts = (user?.email || "user").split("@")[0].split(/[._-]/);
+    client = await prisma.clientProfile.create({
+      data: {
+        userId,
+        firstName: nameParts[0] || "User",
+        lastName: nameParts[1] || "",
+      },
+    });
+  }
 
   const where: any = {
     clientProfileId: client.id,

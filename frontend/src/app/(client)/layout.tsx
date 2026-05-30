@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -26,6 +26,25 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const { user, accessToken, isAuthenticated, logout, fetchMe, hasHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotif, setShowNotif] = useState(false);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get("/notifications?limit=10");
+      setNotifications(res.data.data || []);
+      setUnreadCount(res.data.meta?.unread || 0);
+    } catch { /* silent */ }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.patch("/notifications/read-all");
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch { /* silent */ }
+  };
 
   useEffect(() => {
     if (!hasHydrated) return; // wait for localStorage to be read
@@ -35,6 +54,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     if (user.role === "SUPER_ADMIN") { router.push("/admin/dashboard"); return; }
     if (user.role === "ASSISTANCE_TEAM") { router.push("/assistance/dashboard"); return; }
   }, [hasHydrated, accessToken, isAuthenticated, user]);
+
+  // Fetch notifications on mount and every 30s
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     try { await api.post("/auth/logout"); } catch {}
@@ -105,11 +132,44 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <div className="text-lg font-semibold font-heading">
             {navItems.find((n) => n.href === pathname)?.label || "Dashboard"}
           </div>
-          <div className="flex items-center gap-3">
-            <button className="relative p-2 rounded-xl hover:bg-muted transition-colors">
+          <div className="flex items-center gap-3 relative">
+            <button onClick={() => { setShowNotif(!showNotif); if (!showNotif && unreadCount > 0) markAllRead(); }}
+              className="relative p-2 rounded-xl hover:bg-muted transition-colors">
               <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-brand-600 rounded-full" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
+
+            {/* Notifications dropdown */}
+            {showNotif && (
+              <div className="absolute top-10 right-0 w-80 bg-white border border-border rounded-2xl shadow-2xl z-50 max-h-96 overflow-y-auto">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <p className="font-semibold text-sm">Notifications</p>
+                  {unreadCount > 0 && <button onClick={markAllRead} className="text-xs text-brand-600 hover:underline">Mark all read</button>}
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8 text-sm text-muted-foreground">No notifications</div>
+                ) : (
+                  notifications.map(n => (
+                    <div key={n.id} className={`px-4 py-3 border-b last:border-0 hover:bg-muted/30 cursor-default ${!n.isRead ? "bg-blue-50/50" : ""}`}>
+                      <div className="flex items-start gap-2">
+                        {!n.isRead && <span className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold">{n.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-3">{n.body}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">{new Date(n.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            {/* Click-away overlay */}
+            {showNotif && <div className="fixed inset-0 z-40" onClick={() => setShowNotif(false)} />}
             <Avatar className="h-8 w-8 cursor-pointer">
               <AvatarImage src={profile?.avatarUrl} />
               <AvatarFallback className="bg-brand-100 text-brand-700 text-xs font-bold">
