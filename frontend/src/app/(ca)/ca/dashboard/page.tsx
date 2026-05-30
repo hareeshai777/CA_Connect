@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Calendar, TrendingUp, Users, Star, ArrowRight, Clock, Video, BarChart3, IndianRupee, Award, FolderOpen, AlertCircle } from "lucide-react";
+import { Calendar, TrendingUp, Users, Star, ArrowRight, Clock, Video, BarChart3, IndianRupee, Award, FolderOpen, AlertCircle, CalendarClock, RefreshCw, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,21 @@ import { formatCurrency, formatDateTime, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 
+const isRealMeetLink = (link?: string | null) =>
+  !!link && link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new";
+
 export default function CADashboardPage() {
   const { user, fetchMe } = useAuthStore();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [openingCase, setOpeningCase] = useState<string | null>(null);
+  const [rescheduleId, setRescheduleId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<any[]>([]);
+  const [rescheduleSlotId, setRescheduleSlotId] = useState("");
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const caId = user?.caProfessional?.id;
 
   useEffect(() => {
     api.get("/ca/my/dashboard")
@@ -34,6 +44,41 @@ export default function CADashboardPage() {
   }, []);
 
   const ca = user?.caProfessional;
+
+  const fetchRescheduleSlots = async (date: string) => {
+    if (!date || !caId) return;
+    setLoadingSlots(true);
+    setRescheduleSlots([]);
+    setRescheduleSlotId("");
+    try {
+      const res = await api.get(`/ca/${caId}/slots?date=${date}`);
+      setRescheduleSlots((res.data.data || []).filter((s: any) => !s.isBooked && !s.isBlocked));
+    } catch { setRescheduleSlots([]); }
+    finally { setLoadingSlots(false); }
+  };
+
+  const openReschedule = (id: string) => {
+    setRescheduleId(prev => prev === id ? null : id);
+    setRescheduleDate("");
+    setRescheduleSlots([]);
+    setRescheduleSlotId("");
+  };
+
+  const confirmReschedule = async (bookingId: string) => {
+    if (!rescheduleSlotId) { toast.error("Select a time slot"); return; }
+    setRescheduling(true);
+    try {
+      await api.patch(`/bookings/${bookingId}/ca-reschedule`, { slotId: rescheduleSlotId });
+      toast.success("Meeting rescheduled!");
+      setRescheduleId(null);
+      setRescheduleDate("");
+      setRescheduleSlots([]);
+      setRescheduleSlotId("");
+      const r = await api.get("/ca/my/dashboard");
+      setStats(r.data.data);
+    } catch (err: any) { toast.error(err?.response?.data?.message || "Failed to reschedule"); }
+    finally { setRescheduling(false); }
+  };
 
   const demoChartData = [
     { month: "Jan", bookings: 4 }, { month: "Feb", bookings: 7 }, { month: "Mar", bookings: 5 },
@@ -172,35 +217,82 @@ export default function CADashboardPage() {
                   {stats.upcomingBookings.map((b: any) => {
                     const clientName = `${b.clientProfile?.firstName ?? ""} ${b.clientProfile?.lastName ?? ""}`.trim();
                     const serviceName = b.service?.name ?? "Service";
+                    const isOpen = rescheduleId === b.id;
                     return (
-                      <div key={b.id} className="flex items-center gap-3 p-4 rounded-xl border border-border">
-                        <Avatar className="h-10 w-10 shrink-0">
-                          <AvatarImage src={b.clientProfile?.avatarUrl} />
-                          <AvatarFallback className="bg-green-100 text-green-700 text-xs font-bold">
-                            {getInitials(b.clientProfile?.firstName || "C", b.clientProfile?.lastName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm">{clientName}</p>
-                          <p className="text-xs text-muted-foreground">{serviceName}</p>
-                          <p className="text-xs text-muted-foreground">{formatDateTime(b.scheduledAt)}</p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {b.meetingLink && (
-                            <Button size="sm" className="h-8 text-xs rounded-lg bg-brand-600 hover:bg-brand-700" asChild>
-                              <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
-                                <Video className="mr-1 h-3 w-3" />Join
-                              </a>
+                      <div key={b.id} className="rounded-xl border border-border overflow-hidden">
+                        <div className="flex items-center gap-3 p-4">
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarImage src={b.clientProfile?.avatarUrl} />
+                            <AvatarFallback className="bg-green-100 text-green-700 text-xs font-bold">
+                              {getInitials(b.clientProfile?.firstName || "C", b.clientProfile?.lastName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm">{clientName}</p>
+                            <p className="text-xs text-muted-foreground">{serviceName}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />{formatDateTime(b.scheduledAt)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                            {/* Join Meet — only real links */}
+                            {isRealMeetLink(b.meetingLink) && (
+                              <Button size="sm" className="h-8 text-xs rounded-lg bg-brand-600 hover:bg-brand-700" asChild>
+                                <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
+                                  <Video className="mr-1 h-3 w-3" />Join Meet
+                                </a>
+                              </Button>
+                            )}
+                            {/* Reschedule */}
+                            <Button size="sm" variant={isOpen ? "secondary" : "outline"}
+                              className="h-8 text-xs rounded-lg gap-1"
+                              onClick={() => openReschedule(b.id)}>
+                              <CalendarClock className="h-3 w-3" />
+                              {isOpen ? "Cancel" : "Reschedule"}
                             </Button>
-                          )}
-                          <Button size="sm" variant="outline"
-                            className="h-8 text-xs rounded-lg border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                            disabled={openingCase === b.id}
-                            onClick={() => handleOpenCase(b.id, clientName, serviceName)}>
-                            <FolderOpen className="mr-1 h-3 w-3" />
-                            {openingCase === b.id ? "Opening…" : "Open Case"}
-                          </Button>
+                            {/* Open Case */}
+                            <Button size="sm" variant="outline"
+                              className="h-8 text-xs rounded-lg border-emerald-300 text-emerald-700 hover:bg-emerald-50 gap-1"
+                              disabled={openingCase === b.id}
+                              onClick={() => handleOpenCase(b.id, clientName, serviceName)}>
+                              <FolderOpen className="h-3 w-3" />
+                              {openingCase === b.id ? "Opening…" : "Open Case"}
+                            </Button>
+                          </div>
                         </div>
+
+                        {/* Inline reschedule panel */}
+                        {isOpen && (
+                          <div className="px-4 pb-4 pt-0 border-t border-border bg-muted/30">
+                            <p className="text-xs font-semibold text-muted-foreground mt-3 mb-2">Select new date & time from your schedule</p>
+                            <input type="date" value={rescheduleDate}
+                              min={new Date().toISOString().split("T")[0]}
+                              onChange={(e) => { setRescheduleDate(e.target.value); fetchRescheduleSlots(e.target.value); }}
+                              className="border border-border rounded-xl px-3 py-1.5 text-xs bg-background mb-3 focus:outline-none focus:ring-2 focus:ring-brand-300" />
+                            {loadingSlots && <p className="text-xs text-muted-foreground mb-2"><RefreshCw className="w-3 h-3 inline animate-spin mr-1" />Loading slots…</p>}
+                            {!loadingSlots && rescheduleDate && rescheduleSlots.length === 0 && (
+                              <p className="text-xs text-amber-600 mb-2">No available slots. Add slots in My Schedule first.</p>
+                            )}
+                            {rescheduleSlots.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-3">
+                                {rescheduleSlots.map((slot: any) => (
+                                  <button key={slot.id} onClick={() => setRescheduleSlotId(slot.id)}
+                                    className={`px-2.5 py-1 text-xs rounded-xl border transition-colors ${rescheduleSlotId === slot.id ? "bg-brand-600 text-white border-brand-600" : "border-border hover:border-brand-400"}`}>
+                                    {slot.startTime} – {slot.endTime}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700 h-8 text-xs"
+                                disabled={!rescheduleSlotId || rescheduling}
+                                onClick={() => confirmReschedule(b.id)}>
+                                {rescheduling ? <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Rescheduling…</> : <><CheckCircle className="w-3 h-3 mr-1" />Confirm</>}
+                              </Button>
+                              <Button size="sm" variant="ghost" className="rounded-xl h-8 text-xs" onClick={() => openReschedule(b.id)}>Cancel</Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
