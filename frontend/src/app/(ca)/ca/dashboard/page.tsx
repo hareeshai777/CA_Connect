@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Calendar, TrendingUp, Users, Star, ArrowRight, Clock, Video, BarChart3, IndianRupee, Award, FolderOpen, AlertCircle, CalendarClock, RefreshCw, CheckCircle } from "lucide-react";
+import { Calendar, TrendingUp, Users, Star, ArrowRight, Clock, Video, BarChart3, IndianRupee, Award, FolderOpen, AlertCircle, CalendarClock, RefreshCw, CheckCircle, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export default function CADashboardPage() {
   const [rescheduleSlotId, setRescheduleSlotId] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const caId = user?.caProfessional?.id;
 
   useEffect(() => {
@@ -78,6 +79,18 @@ export default function CADashboardPage() {
       setStats(r.data.data);
     } catch (err: any) { toast.error(err?.response?.data?.message || "Failed to reschedule"); }
     finally { setRescheduling(false); }
+  };
+
+  const sendMeetingDetails = async (bookingId: string) => {
+    setSendingId(bookingId);
+    try {
+      const res = await api.post(`/bookings/${bookingId}/send-meeting-details`);
+      const { emailSent, whatsappSent } = res.data.data || {};
+      const channels = [emailSent && "Email", whatsappSent && "WhatsApp"].filter(Boolean).join(" & ");
+      toast.success(`Meeting details sent to client via ${channels || "notification"}!`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to send meeting details");
+    } finally { setSendingId(null); }
   };
 
   const demoChartData = [
@@ -241,6 +254,18 @@ export default function CADashboardPage() {
                                 <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
                                   <Video className="mr-1 h-3 w-3" />Join Meet
                                 </a>
+                              </Button>
+                            )}
+                            {/* Notify Client — only when real meet link exists */}
+                            {isRealMeetLink(b.meetingLink) && (
+                              <Button size="sm" variant="outline"
+                                className="h-8 text-xs rounded-lg gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+                                disabled={sendingId === b.id}
+                                onClick={() => sendMeetingDetails(b.id)}>
+                                {sendingId === b.id
+                                  ? <><RefreshCw className="h-3 w-3 animate-spin" />Sending…</>
+                                  : <><Send className="h-3 w-3" />Notify Client</>
+                                }
                               </Button>
                             )}
                             {/* Reschedule */}
