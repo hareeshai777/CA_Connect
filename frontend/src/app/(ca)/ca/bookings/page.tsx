@@ -203,9 +203,20 @@ export default function CABookingsPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold">{b.clientProfile?.firstName} {b.clientProfile?.lastName}</p>
                   <p className="text-sm text-muted-foreground">{b.service?.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />{formatDateTime(b.scheduledAt)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-x-3 mt-0.5">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />{formatDateTime(b.scheduledAt)}
+                    </p>
+                    {b.timeSlot && <p className="text-xs text-muted-foreground">🕐 {b.timeSlot.startTime} – {b.timeSlot.endTime}</p>}
+                  </div>
+                  {b.status === "CONFIRMED" && (
+                    <div className="mt-1.5">
+                      {isRealMeetLink(b.meetingLink)
+                        ? <span className="inline-flex items-center gap-1 text-[10px] bg-green-900/20 text-green-400 border border-green-700/40 rounded-full px-2 py-0.5 font-medium"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />Meeting Ready</span>
+                        : <span className="inline-flex items-center gap-1 text-[10px] bg-yellow-900/20 text-yellow-400 border border-yellow-700/40 rounded-full px-2 py-0.5 font-medium">🔗 Link Pending</span>
+                      }
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
