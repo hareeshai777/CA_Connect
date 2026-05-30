@@ -32,7 +32,7 @@ const isRealMeetLink = (link: string | undefined | null) =>
   );
 
 export default function CABookingsPage() {
-  const { user } = useAuthStore();
+  const { user, setAuth, fetchMe, logout } = useAuthStore();
   const caId = user?.caProfessional?.id;
 
   const [bookings, setBookings] = useState<any[]>([]);
@@ -46,6 +46,7 @@ export default function CABookingsPage() {
 
   // Send meeting details state
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [isForbidden, setIsForbidden] = useState(false);
 
   // Reschedule state
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
@@ -67,13 +68,45 @@ export default function CABookingsPage() {
       setTotal(res.data.meta?.total || 0);
     } catch (err: any) {
       if (err?.code === "ERR_CANCELED") return;
-      // 403 = role mismatch — try to auto-fix then retry
+      // 403 = role mismatch — fix DB role, refresh JWT, then retry
       if (err?.response?.status === 403 && retryCount === 0) {
         try {
+          // 1. Fix the DB role
           await api.post("/ca/fix-role");
-          toast.info("Role updated — please log out and sign in again for full access.");
-        } catch { /* ignore fix-role errors */ }
-        setTimeout(() => fetchBookings(1), 1500);
+
+          // 2. Refresh JWT so new token carries CA_PROFESSIONAL role
+          const refreshToken = localStorage.getItem("refreshToken");
+          if (refreshToken) {
+            try {
+              const { api: axiosApi } = await import("@/lib/api");
+              const refreshRes = await axiosApi.post("/auth/refresh", { refreshToken });
+              const { accessToken, refreshToken: newRefresh } = refreshRes.data.data;
+              localStorage.setItem("accessToken", accessToken);
+              localStorage.setItem("refreshToken", newRefresh);
+              // Update Zustand store with new tokens & re-fetch user
+              await fetchMe();
+              toast.success("Account fixed! Loading your bookings...");
+            } catch {
+              // Refresh failed — ask user to log in again
+              toast.warning("Please log out and sign in again to complete the fix.");
+            }
+          }
+        } catch (fixErr: any) {
+          if (fixErr?.response?.status === 404) {
+            // No CA profile exists — redirect to complete setup
+            toast.error("CA profile not found. Please complete your profile setup.");
+            window.location.href = "/auth/register?tab=ca";
+            return;
+          }
+        }
+        setTimeout(() => fetchBookings(1), 1000);
+        return;
+      }
+      // Mark as forbidden if still 403 after fix attempt
+      if (err?.response?.status === 403) {
+        setIsForbidden(true);
+        setError("Permission error — use the button below to fix your account.");
+        setLoading(false);
         return;
       }
       if (retryCount < 1) { setTimeout(() => fetchBookings(retryCount + 1), 2000); return; }
@@ -178,11 +211,36 @@ export default function CABookingsPage() {
         ) : error ? (
           <div className="text-center py-20 bg-red-50 rounded-2xl border border-red-100">
             <AlertCircle className="w-12 h-12 text-red-300 mx-auto mb-3" />
-            <p className="text-red-600 font-medium mb-1">Could not load bookings</p>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" onClick={() => fetchBookings()}>
-              <RefreshCw className="w-4 h-4 mr-1" /> Try Again
-            </Button>
+            {isForbidden ? (
+              <>
+                <p className="text-red-700 font-semibold mb-1">Account Role Issue Detected</p>
+                <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
+                  Your account role needs to be updated to access CA bookings. Click the button below to fix it automatically.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700"
+                    onClick={async () => {
+                      setIsForbidden(false);
+                      setError(null);
+                      await fetchBookings(0);
+                    }}>
+                    <RefreshCw className="w-4 h-4 mr-1" /> Fix & Reload
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-xl"
+                    onClick={() => { logout(); window.location.href = "/auth/login"; }}>
+                    Log Out & Sign In Again
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-red-600 font-medium mb-1">Could not load bookings</p>
+                <p className="text-sm text-muted-foreground mb-4">{error}</p>
+                <Button size="sm" className="rounded-xl bg-brand-600 hover:bg-brand-700" onClick={() => fetchBookings()}>
+                  <RefreshCw className="w-4 h-4 mr-1" /> Try Again
+                </Button>
+              </>
+            )}
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
