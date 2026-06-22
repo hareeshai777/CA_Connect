@@ -56,25 +56,45 @@ router.get("/ca", authenticate, authorize("CA_PROFESSIONAL"), bookingController.
 router.post("/:id/regenerate-link", authenticate, asyncHandler(async (req, res) => {
   const { prisma } = await import("../config/prisma");
   const { sendSuccess, sendError } = await import("../utils/apiResponse");
+  const { zohoMeetingService } = await import("../services/zohoMeeting.service");
+  const { logger } = await import("../utils/logger");
   const userId = req.user!.userId;
   const booking = await prisma.booking.findUnique({
     where: { id: req.params.id },
     include: {
-      clientProfile: { include: { user: { select: { id: true } } } },
-      caProfessional: { include: { user: { select: { id: true } } } },
+      clientProfile: { include: { user: { select: { id: true, email: true } } } },
+      caProfessional: { include: { user: { select: { id: true, email: true } } } },
+      service: { select: { name: true } },
     },
   });
   if (!booking) return sendError(res, "Booking not found", 404);
   const isOwner = booking.clientProfile.user.id === userId || booking.caProfessional.user.id === userId;
   if (!isOwner) return sendError(res, "Unauthorized", 403);
 
-  // Generate a reliable Jitsi Meet link based on booking ID
+  // Same room for both CA and client — try Zoho first, fall back to Jitsi
   const room = `CAConnect-${booking.bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
-  const meetLink = `https://meet.jit.si/${room}`;
+  let meetLink = `https://meet.jit.si/${room}`;
+  let meetingCode = "";
+  try {
+    const zohoMeeting = await zohoMeetingService.createMeeting({
+      topic: `CA Consultation: ${booking.service?.name || "Consultation"}`,
+      presenterEmail: booking.caProfessional.user.email,
+      startTime: new Date(booking.scheduledAt),
+      durationMinutes: booking.duration,
+      participants: [
+        { email: booking.clientProfile.user.email, name: `${booking.clientProfile.firstName} ${booking.clientProfile.lastName}` },
+        { email: booking.caProfessional.user.email, name: `${booking.caProfessional.firstName} ${booking.caProfessional.lastName}` },
+      ],
+    });
+    meetLink = zohoMeeting.joinLink;
+    meetingCode = zohoMeeting.meetingKey;
+  } catch (err) {
+    logger.error("Zoho meeting creation failed, falling back to Jitsi", err);
+  }
 
   await prisma.booking.update({
     where: { id: booking.id },
-    data: { meetingLink: meetLink, googleMeetLink: meetLink },
+    data: { meetingLink: meetLink, googleMeetLink: meetLink, meetingCode },
   });
   return sendSuccess(res, "Meeting link generated", { meetingLink: meetLink });
 }));

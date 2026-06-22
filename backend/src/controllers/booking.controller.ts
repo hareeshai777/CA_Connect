@@ -5,6 +5,7 @@ import { env } from "../config/env";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import { generateBookingNumber, generateOrderId } from "../utils/generateId";
 import { googleCalendarService } from "../services/googleCalendar.service";
+import { zohoMeetingService } from "../services/zohoMeeting.service";
 import { whatsappService } from "../services/whatsapp.service";
 import { sendEmail, emailTemplates } from "../services/email.service";
 import { logger } from "../utils/logger";
@@ -112,8 +113,6 @@ export const confirmBooking = async (req: Request, res: Response) => {
   if (slot.isBooked) return sendError(res, "Slot already booked", 409);
 
   const scheduledAt = new Date(`${slot.date.toISOString().split("T")[0]}T${slot.startTime}`);
-  const endDateTime = new Date(scheduledAt);
-  endDateTime.setMinutes(endDateTime.getMinutes() + 45);
 
   const bookingNumber = generateBookingNumber();
   const platformFee = Math.round((ca.consultationFee * env.PLATFORM_COMMISSION_PERCENT) / 100);
@@ -121,7 +120,29 @@ export const confirmBooking = async (req: Request, res: Response) => {
 
   const clientUser = await prisma.user.findUnique({ where: { id: userId } });
 
-  // Create booking immediately with a fallback Meet link — don't block on Calendar API
+  // Create the meeting room up front so the same link is ready for both
+  // the CA and client as soon as the booking is confirmed.
+  const jitsiFallbackLink = `https://meet.jit.si/CAConnect-${bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
+  let meetingLink = jitsiFallbackLink;
+  let meetingCode = "";
+  try {
+    const zohoMeeting = await zohoMeetingService.createMeeting({
+      topic: `CA Consultation: ${service.name}`,
+      presenterEmail: ca.user.email,
+      startTime: scheduledAt,
+      durationMinutes: 45,
+      participants: [
+        { email: clientUser?.email || "", name: `${client.firstName} ${client.lastName}` },
+        { email: ca.user.email, name: `${ca.firstName} ${ca.lastName}` },
+      ],
+    });
+    meetingLink = zohoMeeting.joinLink;
+    meetingCode = zohoMeeting.meetingKey;
+  } catch (err) {
+    logger.error("Zoho meeting creation failed, falling back to Jitsi", err);
+  }
+
+  // Create booking immediately with the meeting link — don't block on anything else
   const booking = await prisma.$transaction(async (tx) => {
     await tx.timeSlot.update({ where: { id: slotId }, data: { isBooked: true } });
 
@@ -139,8 +160,9 @@ export const confirmBooking = async (req: Request, res: Response) => {
         timeSlotId: slotId,
         status: "CONFIRMED",
         scheduledAt,
-        meetingLink: `https://meet.jit.si/CAConnect-${bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`,
-        googleMeetLink: `https://meet.jit.si/CAConnect-${bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`,
+        meetingLink,
+        googleMeetLink: meetingLink,
+        meetingCode,
         amount: ca.consultationFee,
         platformFee,
         caEarning,
@@ -154,29 +176,6 @@ export const confirmBooking = async (req: Request, res: Response) => {
     return bk;
   });
 
-  // Fire Calendar event creation in the background — updates booking with real Meet link
-  googleCalendarService.createEvent({
-    summary: `CA Consultation: ${service.name}`,
-    description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
-    startDateTime: scheduledAt.toISOString(),
-    endDateTime: endDateTime.toISOString(),
-    attendees: [
-      { email: clientUser?.email || "", displayName: `${client.firstName} ${client.lastName}` },
-      { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
-    ],
-  }).then((calEvent) => {
-    prisma.booking.update({
-      where: { id: booking.id },
-      data: {
-        meetingLink: calEvent.meetLink,
-        googleMeetLink: calEvent.meetLink,
-        googleEventId: calEvent.eventId,
-        calendarEventUrl: calEvent.eventUrl,
-        meetingCode: calEvent.meetingCode,
-      },
-    }).catch((err) => logger.error("Failed to update booking with Meet link", err));
-  }).catch((err) => logger.error("Calendar event creation failed", err));
-
   // Fire notifications in the background
   const dateStr = format(scheduledAt, "dd MMM yyyy");
   const timeStr = `${slot.startTime} - ${slot.endTime}`;
@@ -186,7 +185,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
     service: service.name,
     date: dateStr,
     time: timeStr,
-    meetLink: `https://meet.google.com/new`,
+    meetLink: booking.meetingLink || jitsiFallbackLink,
     bookingNumber,
   };
   Promise.allSettled([
@@ -218,8 +217,6 @@ export const directBook = async (req: Request, res: Response) => {
   if (!slot || slot.isBooked || slot.isBlocked) return sendError(res, "Time slot not available", 400);
 
   const scheduledAt = new Date(`${slot.date.toISOString().split("T")[0]}T${slot.startTime}`);
-  const endDateTime = new Date(scheduledAt);
-  endDateTime.setMinutes(endDateTime.getMinutes() + 45);
 
   const bookingNumber = generateBookingNumber();
   const platformFee = Math.round((ca.consultationFee * env.PLATFORM_COMMISSION_PERCENT) / 100);
@@ -228,7 +225,29 @@ export const directBook = async (req: Request, res: Response) => {
 
   const orderId = generateOrderId();
 
-  // Create booking immediately — don't block on Calendar API
+  // Create the meeting room up front so the same link is ready for both
+  // the CA and client as soon as the booking is confirmed.
+  const jitsiFallbackLink = `https://meet.jit.si/CAConnect-${orderId.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
+  let meetingLink = jitsiFallbackLink;
+  let meetingCode = "";
+  try {
+    const zohoMeeting = await zohoMeetingService.createMeeting({
+      topic: `CA Consultation: ${service.name}`,
+      presenterEmail: ca.user.email,
+      startTime: scheduledAt,
+      durationMinutes: 45,
+      participants: [
+        { email: clientUser?.email || "", name: `${client.firstName} ${client.lastName}` },
+        { email: ca.user.email, name: `${ca.firstName} ${ca.lastName}` },
+      ],
+    });
+    meetingLink = zohoMeeting.joinLink;
+    meetingCode = zohoMeeting.meetingKey;
+  } catch (err) {
+    logger.error("Zoho meeting creation failed, falling back to Jitsi", err);
+  }
+
+  // Create booking immediately — meeting link is already resolved above
   const booking = await prisma.$transaction(async (tx) => {
     await tx.timeSlot.update({ where: { id: slotId }, data: { isBooked: true } });
 
@@ -245,11 +264,6 @@ export const directBook = async (req: Request, res: Response) => {
       },
     });
 
-    // Generate a guaranteed Jitsi Meet room immediately (no API needed)
-    // Format: https://meet.jit.si/CAConnect-{last10charsOfOrderId}
-    const jitsiRoom = `CAConnect-${orderId.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
-    const instantMeetLink = `https://meet.jit.si/${jitsiRoom}`;
-
     const bk = await tx.booking.create({
       data: {
         bookingNumber,
@@ -260,8 +274,9 @@ export const directBook = async (req: Request, res: Response) => {
         status: "CONFIRMED",
         scheduledAt,
         duration: 45,
-        meetingLink: instantMeetLink,
-        googleMeetLink: instantMeetLink,
+        meetingLink,
+        googleMeetLink: meetingLink,
+        meetingCode,
         notes,
         amount: ca.consultationFee,
         platformFee,
@@ -285,7 +300,7 @@ export const directBook = async (req: Request, res: Response) => {
     service: service.name,
     date: dateStr,
     time: timeStr,
-    meetLink: booking.meetingLink || "", // Real Jitsi link available immediately
+    meetLink: booking.meetingLink || jitsiFallbackLink,
     bookingNumber: booking.bookingNumber,
   };
   // Create in-app notifications immediately
@@ -305,45 +320,6 @@ export const directBook = async (req: Request, res: Response) => {
     clientUser?.phone && whatsappService.sendBookingConfirmation({ ...notifData, phone: clientUser.phone }),
     ca.user.phone && whatsappService.sendBookingConfirmation({ ...notifData, phone: ca.user.phone }),
   ]).catch(() => {});
-
-  // Fire Calendar event creation in the background — sends real Meet link when ready
-  googleCalendarService.createEvent({
-    summary: `CA Consultation: ${service.name}`,
-    description: `Client: ${client.firstName} ${client.lastName}\nCA: ${ca.firstName} ${ca.lastName}\nService: ${service.name}`,
-    startDateTime: scheduledAt.toISOString(),
-    endDateTime: endDateTime.toISOString(),
-    attendees: [
-      { email: clientUser?.email || "", displayName: `${client.firstName} ${client.lastName}` },
-      { email: ca.user.email, displayName: `${ca.firstName} ${ca.lastName}` },
-    ],
-  }).then((calEvent) => {
-    if (!calEvent.meetLink) return;
-    prisma.booking.update({
-      where: { id: booking.id },
-      data: {
-        meetingLink: calEvent.meetLink,
-        googleMeetLink: calEvent.meetLink,
-        googleEventId: calEvent.eventId,
-        calendarEventUrl: calEvent.eventUrl,
-        meetingCode: calEvent.meetingCode,
-      },
-    }).then(() => {
-      // Send follow-up notification with the real Meet link
-      const meetingData = {
-        clientName: `${client.firstName} ${client.lastName}`,
-        caName: `${ca.firstName} ${ca.lastName}`,
-        service: service.name,
-        date: dateStr,
-        time: timeStr,
-        meetLink: calEvent.meetLink,
-        bookingNumber: booking.bookingNumber,
-      };
-      Promise.allSettled([
-        sendEmail({ to: clientUser?.email || "", ...emailTemplates.meetingDetails(meetingData) }),
-        clientUser?.phone && whatsappService.sendMeetingDetails({ ...meetingData, phone: clientUser.phone, name: meetingData.clientName }),
-      ]).catch(() => {});
-    }).catch((err) => logger.error("Failed to update booking with Meet link", err));
-  }).catch((err) => logger.error("Calendar event creation failed (directBook)", err));
 
   return sendSuccess(res, "Booking confirmed!", { booking, meetLink: booking.meetingLink }, 201);
 };

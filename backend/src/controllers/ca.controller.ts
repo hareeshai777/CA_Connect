@@ -3,6 +3,16 @@ import { prisma } from "../config/prisma";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import { uploadToCloudinary } from "../middleware/upload";
 
+// TimeSlot.date is stored as a date-only value (midnight UTC). Comparing it
+// against `new Date()` (the exact current timestamp) would exclude today's
+// slots as soon as any time has passed midnight, so we compare against
+// midnight UTC of today instead.
+const startOfToday = () => {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+};
+
 export const registerCA = async (req: Request, res: Response) => {
   const {
     firstName,
@@ -124,7 +134,7 @@ export const getCAProfile = async (req: Request, res: Response) => {
         },
       },
       timeSlots: {
-        where: { isBooked: false, isBlocked: false, date: { gte: new Date() } },
+        where: { isBooked: false, isBlocked: false, date: { gte: startOfToday() } },
         orderBy: { date: "asc" },
         take: 30,
       },
@@ -278,7 +288,7 @@ export const getCATimeSlots = async (req: Request, res: Response) => {
     nextDay.setUTCDate(nextDay.getUTCDate() + 1);
     where.date = { gte: d, lt: nextDay };
   } else {
-    where.date = { gte: new Date() };
+    where.date = { gte: startOfToday() };
   }
 
   const slots = await prisma.timeSlot.findMany({

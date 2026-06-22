@@ -21,6 +21,13 @@ export const env = {
   GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || "primary",
   GOOGLE_WORKSPACE_ADMIN_EMAIL: process.env.GOOGLE_WORKSPACE_ADMIN_EMAIL || "",
 
+  ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || "",
+  ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || "",
+  ZOHO_REFRESH_TOKEN: process.env.ZOHO_REFRESH_TOKEN || "",
+  ZOHO_ACCOUNTS_URL: process.env.ZOHO_ACCOUNTS_URL || "https://accounts.zoho.com",
+  ZOHO_MEETING_API_URL: process.env.ZOHO_MEETING_API_URL || "https://meeting.zoho.com",
+  ZOHO_ZSOID: process.env.ZOHO_ZSOID || "",
+
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY!,
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET!,
