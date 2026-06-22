@@ -71,9 +71,8 @@ router.post("/:id/regenerate-link", authenticate, asyncHandler(async (req, res) 
   const isOwner = booking.clientProfile.user.id === userId || booking.caProfessional.user.id === userId;
   if (!isOwner) return sendError(res, "Unauthorized", 403);
 
-  // Same room for both CA and client — try Zoho first, fall back to Jitsi
-  const room = `CAConnect-${booking.bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
-  let meetLink = `https://meet.jit.si/${room}`;
+  // Same Zoho room for both CA and client
+  let meetLink: string;
   let meetingCode = "";
   try {
     const zohoMeeting = await zohoMeetingService.createMeeting({
@@ -89,7 +88,8 @@ router.post("/:id/regenerate-link", authenticate, asyncHandler(async (req, res) 
     meetLink = zohoMeeting.joinLink;
     meetingCode = zohoMeeting.meetingKey;
   } catch (err) {
-    logger.error("Zoho meeting creation failed, falling back to Jitsi", err);
+    logger.error("Zoho meeting creation failed", err);
+    return sendError(res, "Could not generate a Zoho meeting link. Please check Zoho Meeting configuration and try again.", 502);
   }
 
   await prisma.booking.update({

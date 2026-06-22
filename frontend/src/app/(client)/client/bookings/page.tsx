@@ -26,7 +26,6 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
 const isRealMeetLink = (link: string | undefined | null) =>
   !!link && (
     (link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new") ||
-    link.startsWith("https://meet.jit.si/") ||
     link.includes("meeting.zoho.")
   );
 
@@ -80,7 +79,7 @@ export default function ClientBookingsPage() {
     return () => abortRef.current?.abort();
   }, [page, status]);
 
-  // Auto-fix stuck bookings (old placeholder) by regenerating Jitsi link
+  // Auto-fix stuck bookings (old placeholder) by regenerating the Zoho meeting link
   useEffect(() => {
     const stuckBookings = bookings.filter(
       b => b.status === "CONFIRMED" && b.meetingLink === "https://meet.google.com/new"

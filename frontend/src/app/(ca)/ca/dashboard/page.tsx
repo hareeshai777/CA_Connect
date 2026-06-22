@@ -16,7 +16,6 @@ import { toast } from "sonner";
 const isRealMeetLink = (link?: string | null) =>
   !!link && (
     (link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new") ||
-    link.startsWith("https://meet.jit.si/") ||
     link.includes("meeting.zoho.")
   );
 

@@ -28,7 +28,6 @@ const isMeetingExpired = (scheduledAt: string, duration = 45) => {
 const isRealMeetLink = (link: string | undefined | null) =>
   !!link && (
     (link.startsWith("https://meet.google.com/") && link !== "https://meet.google.com/new") ||
-    link.startsWith("https://meet.jit.si/") ||
     link.includes("meeting.zoho.")
   );
 

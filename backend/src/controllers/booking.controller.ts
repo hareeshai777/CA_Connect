@@ -120,10 +120,9 @@ export const confirmBooking = async (req: Request, res: Response) => {
 
   const clientUser = await prisma.user.findUnique({ where: { id: userId } });
 
-  // Create the meeting room up front so the same link is ready for both
-  // the CA and client as soon as the booking is confirmed.
-  const jitsiFallbackLink = `https://meet.jit.si/CAConnect-${bookingNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
-  let meetingLink = jitsiFallbackLink;
+  // Create the Zoho meeting room up front so the same link is ready for
+  // both the CA and client as soon as the booking is confirmed.
+  let meetingLink: string | null = null;
   let meetingCode = "";
   try {
     const zohoMeeting = await zohoMeetingService.createMeeting({
@@ -139,7 +138,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
     meetingLink = zohoMeeting.joinLink;
     meetingCode = zohoMeeting.meetingKey;
   } catch (err) {
-    logger.error("Zoho meeting creation failed, falling back to Jitsi", err);
+    logger.error("Zoho meeting creation failed", err);
   }
 
   // Create booking immediately with the meeting link — don't block on anything else
@@ -185,7 +184,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
     service: service.name,
     date: dateStr,
     time: timeStr,
-    meetLink: booking.meetingLink || jitsiFallbackLink,
+    meetLink: booking.meetingLink || "",
     bookingNumber,
   };
   Promise.allSettled([
@@ -225,10 +224,9 @@ export const directBook = async (req: Request, res: Response) => {
 
   const orderId = generateOrderId();
 
-  // Create the meeting room up front so the same link is ready for both
-  // the CA and client as soon as the booking is confirmed.
-  const jitsiFallbackLink = `https://meet.jit.si/CAConnect-${orderId.replace(/[^a-zA-Z0-9]/g, "").slice(-10)}`;
-  let meetingLink = jitsiFallbackLink;
+  // Create the Zoho meeting room up front so the same link is ready for
+  // both the CA and client as soon as the booking is confirmed.
+  let meetingLink: string | null = null;
   let meetingCode = "";
   try {
     const zohoMeeting = await zohoMeetingService.createMeeting({
@@ -244,7 +242,7 @@ export const directBook = async (req: Request, res: Response) => {
     meetingLink = zohoMeeting.joinLink;
     meetingCode = zohoMeeting.meetingKey;
   } catch (err) {
-    logger.error("Zoho meeting creation failed, falling back to Jitsi", err);
+    logger.error("Zoho meeting creation failed", err);
   }
 
   // Create booking immediately — meeting link is already resolved above
@@ -300,7 +298,7 @@ export const directBook = async (req: Request, res: Response) => {
     service: service.name,
     date: dateStr,
     time: timeStr,
-    meetLink: booking.meetingLink || jitsiFallbackLink,
+    meetLink: booking.meetingLink || "",
     bookingNumber: booking.bookingNumber,
   };
   // Create in-app notifications immediately
